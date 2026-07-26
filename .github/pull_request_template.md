@@ -1,19 +1,21 @@
 ## Summary
 
-- 
+<!-- add a brief summary of your changes including testing -->
 
 ## Validation
 
-- [ ] `scripts/quality-check.sh`
-- [ ] Manual testing, if applicable:
+- [ ] `scripts/quality-check.sh` passes locally
+- [ ] Appropriate `/test` commands were run and are passing (e.g. `/test gpu`)
+- [ ] Unit tests were added / e2e tests were added where applicable
+- [ ] Manual testing, if applicable (describe further):
 
 ## Checklist
 
 - [ ] The change is focused and easy to review.
-- [ ] Tests were added or updated for behavior changes.
-- [ ] Documentation was updated for user-facing or setup changes.
-- [ ] No secrets, generated artifacts, or local-only files are included.
+- [ ] Tests were added or updated for behaviour changes.
+- [ ] No secrets, generated files, or files that only make sense on my machine are included.
+- [ ] Relevant documentation is updated.
 
-## Notes for Reviewers
+## Additional Comments
 
-- 
+<!-- Leave blank if none -->

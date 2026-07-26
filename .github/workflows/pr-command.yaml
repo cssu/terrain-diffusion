@@ -1,0 +1,167 @@
+name: PR command
+
+# TODO: update when gpu is added
+# Lets you run tests via PR comment:
+#   /test all <pytest args>     every test: python, slow and web (not gpu yet)
+#   /test python <pytest args>  the quick tests
+#   /test slow <pytest args>    the tests marked `slow`
+#   /test gpu <pytest args>     the tests marked `gpu`, on the project's GPU machine
+#   /test web                   the 3D visualizer
+#   /test help                  explains the commands
+#
+# Changes to this file do not show on the PR that adds them
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+# There is deliberately no concurrency setting for the whole workflow. One here
+# would put every comment on a pull request into a single queue, so `/test web`
+# would sit waiting for `/test python` to finish. The cancelling is done per
+# test group on the run-tests job below instead.
+
+jobs:
+  # Decide whether to do anything at all, and if so, what.
+  prepare:
+    name: prepare
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/test') }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      mode: ${{ steps.parse.outputs.mode }}
+      matrix: ${{ steps.parse.outputs.matrix }}
+      groups: ${{ steps.parse.outputs.groups }}
+      pytest_args: ${{ steps.parse.outputs.pytest_args }}
+      sha: ${{ steps.commit.outputs.sha }}
+      short_sha: ${{ steps.commit.outputs.short_sha }}
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Check the commenter is allowed to run commands
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          ASSOCIATION: ${{ github.event.comment.author_association }}
+        run: .github/scripts/check-commenter.sh
+
+      - name: React to the comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: .github/scripts/react-to-comment.sh
+
+      - name: Work out what to run
+        id: parse
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: .github/scripts/parse-command.sh
+
+      - name: Find the commit to test
+        id: commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: .github/scripts/find-commit.sh
+
+  # `/test help`: reply with the list of commands and run nothing.
+  help:
+    name: help
+    needs: prepare
+    if: needs.prepare.outputs.mode == 'help'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Post the list of commands
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: .github/scripts/post-help.sh
+
+  # pne copy of this job per group that was asked for, so
+  # `/test all` runs four of them at once.
+  run-tests:
+    name: ${{ matrix.group }}
+    needs: prepare
+    if: needs.prepare.outputs.mode == 'tests'
+    runs-on: ${{ fromJSON(matrix.runs_on) }}
+    timeout-minutes: 60
+
+    strategy:
+      # turning on would fail jobs across different groups
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+
+    concurrency:
+      group: pr-test-${{ github.event.issue.number }}-${{ matrix.group }}
+      cancel-in-progress: true
+
+    steps:
+      # check out latest commit at time of comment
+      - name: Check out the pull request
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Install uv
+        if: matrix.group != 'web'
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        if: matrix.group != 'web'
+        run: scripts/install-python-dependencies.sh
+
+      - name: Run tests
+        if: matrix.group != 'web'
+        env:
+          GROUP: ${{ matrix.group }}
+          PYTEST_ARGS: ${{ needs.prepare.outputs.pytest_args }}
+        run: scripts/test-check.sh "$GROUP" $PYTEST_ARGS
+
+      - name: Set up Node.js
+        if: matrix.group == 'web'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install web dependencies
+        if: matrix.group == 'web'
+        run: scripts/install-web-dependencies.sh
+
+      - name: Run the web checks
+        if: matrix.group == 'web'
+        run: scripts/web-check.sh
+
+  # return one comment with the results of all tests
+  report:
+    name: report
+    needs: [prepare, run-tests]
+    if: always() && needs.run-tests.result != 'skipped' && needs.run-tests.result != 'cancelled'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Post the result as a comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RESULT: ${{ needs.run-tests.result }}
+          TEST_GROUPS: ${{ needs.prepare.outputs.groups }}
+          SHA: ${{ needs.prepare.outputs.sha }}
+          SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: .github/scripts/post-result.sh

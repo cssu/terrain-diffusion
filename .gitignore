@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+
+.venv/
+venv/
+
+# packaging output
+build/
+dist/
+*.egg-info/
+
+# tool caches
+.pytest_cache/
+.ruff_cache/
+
+node_modules/
+
+# editor specific / os
+# auto generated and should be ignored
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

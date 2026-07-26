@@ -1,0 +1,97 @@
+name: CI
+
+# Runs automatically on every pull request and on every push to main.
+# The `format` and `test` jobs are the ones a pull request must pass before it
+# is allowed to merge
+#
+# See docs/branch-protection.md for more info
+#
+# Jobs are split into web and python checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # check for code formatting
+  format:
+    name: format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: scripts/install-python-dependencies.sh
+
+      - name: Check formatting and code style
+        run: scripts/format-check.sh
+
+  # check quick test are passing
+  # gpu / other slow tests run with pr command
+  test:
+    name: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: scripts/install-python-dependencies.sh
+
+      - name: Run the quick tests
+        run: scripts/test-check.sh python
+
+  # TODO: update script for web side when added
+  web:
+    name: web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Look for a web/ folder
+        id: detect
+        run: |
+          if [[ -f web/package.json ]]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No web/ folder yet, so there is nothing to check."
+          fi
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install web dependencies
+        if: steps.detect.outputs.present == 'true'
+        run: scripts/install-web-dependencies.sh
+
+      - name: Run the web checks
+        if: steps.detect.outputs.present == 'true'
+        run: scripts/web-check.sh

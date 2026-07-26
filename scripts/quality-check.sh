@@ -1,45 +1,24 @@
 #!/usr/bin/env bash
+#
+# Runs every check, should run before pushing.
+#   scripts/format-check.sh     formatting and code style
+#   scripts/test-check.sh       quick tests
+#   scripts/web-check.sh        the visualizer, once web/ exists
+#
+# Run any of those on their own if you only want that part. To correct
+# formatting problems, run scripts/format-check.sh --fix.
+
 set -euo pipefail
 
-has_command() {
-  command -v "$1" > /dev/null 2>&1
-}
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-run_node_script_if_present() {
-  local script_name="$1"
+scripts/format-check.sh
 
-  if [[ ! -f package.json ]]; then
-    return 0
-  fi
+echo
+scripts/test-check.sh
 
-  if ! node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['$script_name'] ? 0 : 1)" 2> /dev/null; then
-    return 0
-  fi
+echo
+scripts/web-check.sh
 
-  if [[ -f pnpm-lock.yaml ]]; then
-    if ! has_command pnpm && has_command corepack; then
-      corepack enable
-    fi
-    if ! has_command pnpm; then
-      echo "pnpm-lock.yaml found, but pnpm is not installed." >&2
-      exit 1
-    fi
-    pnpm run "$script_name"
-  elif [[ -f yarn.lock ]]; then
-    if ! has_command yarn && has_command corepack; then
-      corepack enable
-    fi
-    if ! has_command yarn; then
-      echo "yarn.lock found, but yarn is not installed." >&2
-      exit 1
-    fi
-    yarn "$script_name"
-  else
-    npm run "$script_name"
-  fi
-}
-
-run_node_script_if_present lint
-run_node_script_if_present test
-
-echo "Quality checks completed."
+echo
+echo "All checks passed."

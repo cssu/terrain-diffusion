@@ -1,0 +1,59 @@
+[project]
+name = "terrain-diffusion"
+version = "0.1.0"
+description = "Reproduction of InfiniteDiffusion: seamless, infinite, seed-determined terrain generation."
+readme = "README.md"
+requires-python = ">=3.14"
+
+# Packages the project itself needs in order to run
+# TODO: add entries here as the project starts needing them,
+# then run `uv sync` to install and update uv.lock
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.9",
+]
+
+[tool.uv]
+# TODO: When the first package is created under src/, delete this line and add a
+# [build-system] section so the package can be installed.
+package = false
+
+
+# ---------------------------------------------------------------------------
+# ruff: formats code and checks it for mistakes
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle errors: spacing and layout problems
+    "W", # pycodestyle warnings: trailing whitespace and similar
+    "F", # pyflakes: unused imports, undefined names, real mistakes
+    "I", # isort: keeps imports in a consistent order
+    "UP", # pyupgrade: flags outdated Python syntax
+    "B", # flake8-bugbear: common bug patterns
+]
+ignore = [
+    "E501", # ignore line length complains since formatter decides
+]
+
+
+# ---------------------------------------------------------------------------
+# pytest: finds and runs the tests
+# ---------------------------------------------------------------------------
+
+[tool.pytest.ini_options]
+# raise malformed pytest @ marks or config as errors
+addopts = "--strict-markers --strict-config"
+
+markers = [
+    "slow: use for slow tests, runs on /test slow comment",
+    "gpu: use for GPU tests, runs on  /test gpu comment",
+]
