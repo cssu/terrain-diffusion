@@ -1,0 +1,6 @@
+# store every text file with Unix line endings
+# to avoid whitespace diffs between windows and linux
+* text=auto eol=lf
+
+# mark uv.lock as machine generated to hide in diff
+uv.lock linguist-generated=true
