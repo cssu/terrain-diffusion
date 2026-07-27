@@ -6,7 +6,7 @@ name: PR command
 #   /test python <pytest args>  the quick tests
 #   /test slow <pytest args>    the tests marked `slow`
 #   /test gpu <pytest args>     the tests marked `gpu`, on the project's GPU machine
-#   /test web                   the 3D visualizer
+#   /test web                   the visualizer
 #   /test help                  explains the commands
 #
 # Changes to this file do not show on the PR that adds them
@@ -20,13 +20,8 @@ permissions:
   issues: write
   pull-requests: write
 
-# There is deliberately no concurrency setting for the whole workflow. One here
-# would put every comment on a pull request into a single queue, so `/test web`
-# would sit waiting for `/test python` to finish. The cancelling is done per
-# test group on the run-tests job below instead.
-
 jobs:
-  # Decide whether to do anything at all, and if so, what.
+  # Decide whether to do anything at all
   prepare:
     name: prepare
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/test') }}
@@ -42,7 +37,7 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check the commenter is allowed to run commands
         env:
@@ -71,7 +66,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: .github/scripts/find-commit.sh
 
-  # `/test help`: reply with the list of commands and run nothing.
+  # `/test help`: reply with the list of commands
   help:
     name: help
     needs: prepare
@@ -80,7 +75,7 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Post the list of commands
         env:
@@ -88,8 +83,6 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: .github/scripts/post-help.sh
 
-  # pne copy of this job per group that was asked for, so
-  # `/test all` runs four of them at once.
   run-tests:
     name: ${{ matrix.group }}
     needs: prepare
@@ -109,13 +102,13 @@ jobs:
     steps:
       # check out latest commit at time of comment
       - name: Check out the pull request
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Install uv
         if: matrix.group != 'web'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
 
@@ -128,11 +121,12 @@ jobs:
         env:
           GROUP: ${{ matrix.group }}
           PYTEST_ARGS: ${{ needs.prepare.outputs.pytest_args }}
+          JUNIT_XML: results/junit-${{ matrix.group }}.xml
         run: scripts/test-check.sh "$GROUP" $PYTEST_ARGS
 
       - name: Set up Node.js
         if: matrix.group == 'web'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -142,7 +136,18 @@ jobs:
 
       - name: Run the web checks
         if: matrix.group == 'web'
+        env:
+          JUNIT_XML: ${{ github.workspace }}/results/junit-web.xml
         run: scripts/web-check.sh
+
+      - name: Keep the results for the report job
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-${{ matrix.group }}
+          path: results/
+          if-no-files-found: ignore
+          retention-days: 1
 
   # return one comment with the results of all tests
   report:
@@ -153,7 +158,14 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Collect the results from every group
+        uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          path: results
+          merge-multiple: true
 
       - name: Post the result as a comment
         env:
@@ -164,4 +176,5 @@ jobs:
           SHA: ${{ needs.prepare.outputs.sha }}
           SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESULTS_DIR: results
         run: .github/scripts/post-result.sh
