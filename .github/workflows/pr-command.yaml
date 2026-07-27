@@ -6,7 +6,7 @@ name: PR command
 #   /test python <pytest args>  the quick tests
 #   /test slow <pytest args>    the tests marked `slow`
 #   /test gpu <pytest args>     the tests marked `gpu`, on the project's GPU machine
-#   /test web                   the 3D visualizer
+#   /test web                   the visualizer
 #   /test help                  explains the commands
 #
 # Changes to this file do not show on the PR that adds them
@@ -20,13 +20,8 @@ permissions:
   issues: write
   pull-requests: write
 
-# There is deliberately no concurrency setting for the whole workflow. One here
-# would put every comment on a pull request into a single queue, so `/test web`
-# would sit waiting for `/test python` to finish. The cancelling is done per
-# test group on the run-tests job below instead.
-
 jobs:
-  # Decide whether to do anything at all, and if so, what.
+  # Decide whether to do anything at all
   prepare:
     name: prepare
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/test') }}
@@ -71,7 +66,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: .github/scripts/find-commit.sh
 
-  # `/test help`: reply with the list of commands and run nothing.
+  # `/test help`: reply with the list of commands
   help:
     name: help
     needs: prepare
@@ -88,8 +83,6 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: .github/scripts/post-help.sh
 
-  # pne copy of this job per group that was asked for, so
-  # `/test all` runs four of them at once.
   run-tests:
     name: ${{ matrix.group }}
     needs: prepare

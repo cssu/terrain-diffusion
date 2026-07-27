@@ -31,10 +31,10 @@ To run more specific tests, refer to the following commands.
 | `scripts/test-check.sh slow` | The tests marked `slow`. |
 | `scripts/test-check.sh gpu` | The tests marked `gpu`. |
 | `scripts/test-check.sh all` | Every test. |
-| `scripts/web-check.sh` | The visualizer, once `web/` exists. |
+| `scripts/web-check.sh` | The visualizer in `web/`: lint, tests, and build. |
 
 
-Testing in this project is mostly done with pytest (web test framework is undecided). We use pytest markers to categorize tests into three groups: `quick`, `slow`, and `gpu`.
+Testing on the Python side is done with pytest, and on the web side with vitest. We use pytest markers to categorize tests into three groups: `quick`, `slow`, and `gpu`.
 `slow` and `gpu` tests are explicitly marked using `@pytest.mark.<slow|gpu>`, a test is categorized as `quick` otherwise.
 You can use `test-check.sh` to run tests locally. Refer to the table above on how to invoke specific groups.
 
@@ -49,9 +49,25 @@ uv run pytest
 uv run pytest -k sampler
 ```
 
+## The visualizer in `web/`
+
+The visualizer is a [Vite](https://vite.dev/) project using React and TypeScript, tested with [vitest](https://vitest.dev/). 
+
+Packages are managed by pnpm and already installed by `scripts/install-dependencies.sh`. To start the dev server:
+
+```bash
+cd web && pnpm dev
+```
+
+Tests go in `web/tests/`.
+
+**Future work:** Add three.js and make the visualizer 3d and interactive.
+
 ## Adding a package
 
-To add a package, put it in `pyproject.toml`, run `uv sync`, and commit the change to `uv.lock`. Skipping the lockfile means the package works for you and breaks for everyone else.
+For Python, put it in `pyproject.toml`, run `uv sync`, and commit the change to `uv.lock`.
+
+For the frontend, run `pnpm add <package>` inside `web/` and commit the change to `web/pnpm-lock.yaml`.
 
 ## Opening a pull request
 

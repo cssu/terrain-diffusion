@@ -20,7 +20,7 @@ elif [[ -f web/yarn.lock ]]; then
   runner=(yarn)
 fi
 
-for script in lint test; do
+for script in lint test build; do
   if node -e "const p=require('./web/package.json'); process.exit(p.scripts && p.scripts['$script'] ? 0 : 1)" 2> /dev/null; then
     echo
     echo "==> Running '$script' in web/"
