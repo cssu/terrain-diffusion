@@ -8,5 +8,8 @@ export default defineConfig({
     include: ['tests/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    reporters: process.env.JUNIT_XML
+      ? ['default', ['junit', { outputFile: process.env.JUNIT_XML }]]
+      : ['default'],
   },
 })

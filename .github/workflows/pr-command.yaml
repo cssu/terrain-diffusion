@@ -121,6 +121,7 @@ jobs:
         env:
           GROUP: ${{ matrix.group }}
           PYTEST_ARGS: ${{ needs.prepare.outputs.pytest_args }}
+          JUNIT_XML: results/junit-${{ matrix.group }}.xml
         run: scripts/test-check.sh "$GROUP" $PYTEST_ARGS
 
       - name: Set up Node.js
@@ -135,7 +136,18 @@ jobs:
 
       - name: Run the web checks
         if: matrix.group == 'web'
+        env:
+          JUNIT_XML: ${{ github.workspace }}/results/junit-web.xml
         run: scripts/web-check.sh
+
+      - name: Keep the results for the report job
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-${{ matrix.group }}
+          path: results/
+          if-no-files-found: ignore
+          retention-days: 1
 
   # return one comment with the results of all tests
   report:
@@ -148,6 +160,13 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v7
 
+      - name: Collect the results from every group
+        uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          path: results
+          merge-multiple: true
+
       - name: Post the result as a comment
         env:
           GH_TOKEN: ${{ github.token }}
@@ -157,4 +176,5 @@ jobs:
           SHA: ${{ needs.prepare.outputs.sha }}
           SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RESULTS_DIR: results
         run: .github/scripts/post-result.sh

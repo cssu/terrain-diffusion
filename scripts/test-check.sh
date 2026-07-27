@@ -58,10 +58,17 @@ if [[ -n "$markers" ]]; then
   marker_args=(-m "$markers")
 fi
 
+# report failing tests in formatted table
+report_args=()
+if [[ -n "${JUNIT_XML:-}" ]]; then
+  mkdir -p "$(dirname "$JUNIT_XML")"
+  report_args=(--junitxml="$JUNIT_XML" -o junit_family=xunit1)
+fi
+
 echo "==> Running the '$group' tests (pytest)"
 
 status=0
-uv run pytest "${marker_args[@]}" "$@" || status=$?
+uv run pytest "${marker_args[@]}" "${report_args[@]+"${report_args[@]}"}" "$@" || status=$?
 
 if [[ $status -eq 5 ]]; then
   if [[ "$group" == "python" ]]; then
