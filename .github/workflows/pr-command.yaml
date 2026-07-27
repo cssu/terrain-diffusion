@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Check the commenter is allowed to run commands
         env:
@@ -75,7 +75,7 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Post the list of commands
         env:
@@ -102,13 +102,13 @@ jobs:
     steps:
       # check out latest commit at time of comment
       - name: Check out the pull request
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Install uv
         if: matrix.group != 'web'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v9
         with:
           enable-cache: true
 
@@ -125,7 +125,7 @@ jobs:
 
       - name: Set up Node.js
         if: matrix.group == 'web'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -146,7 +146,7 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Post the result as a comment
         env:
