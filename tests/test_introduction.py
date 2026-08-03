@@ -16,7 +16,7 @@ class TestIntroductory:
     @pytest.fixture
     def user_list(self):
         return [
-            # add your usernames here
+            "Zain-Mahmoud"
             "kurbydoo",
         ]
 
@@ -33,3 +33,11 @@ class TestIntroductory:
         assert len(user_list) == 1
 
     ### Add your tests below, follow the format above
+
+    def test_Zain_Mahmoud(self, user_list):
+
+        sorted_list = sorted(user_list)
+        assert all(sorted_list[0] <= x for x in user_list), "Check sorted"
+
+        num_list = range(15)
+        assert all((2*x) % 2 == 0 for x in num_list), "Check even"
