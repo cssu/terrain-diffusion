@@ -18,6 +18,7 @@ class TestIntroductory:
         return [
             # add your usernames here
             "kurbydoo",
+            "DanisLol",
         ]
 
     def test_kurbydoo(self, user_list):
@@ -30,6 +31,11 @@ class TestIntroductory:
 
         assert counter == n * (n - 1) // 2, "Check arithmetic sum"
 
-        assert len(user_list) == 1
+        assert len(user_list) == 2
 
     ### Add your tests below, follow the format above
+    def test_danislol(self, user_list):
+        assert 2 + 2 == 4, "basic math"
+
+        assert True is True
+        
