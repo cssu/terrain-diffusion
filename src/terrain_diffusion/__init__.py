@@ -8,6 +8,7 @@ One module per component:
     sampler        Windowed Blending Sampler
     store          Terrain Store
     orchestration  Generation Orchestration
+    service        Generation Service
     cli            Output and CLI
     benchmark      Benchmarking and Evaluation
 """

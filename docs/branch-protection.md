@@ -43,9 +43,7 @@ test
 web
 ```
 
-They may instead appear in the list as `CI / format`, `CI / test`, and
-`CI / web`. Choose whichever version GitHub shows you. `web` passes until the
-`web/` folder exists, and starts checking it once it does.
+They may instead appear in the list as `CI / format`, `CI / test`, and `CI / web`. Choose whichever version GitHub shows you. `web` passes until the `web/` folder exists, and starts checking it once it does.
 
 Leave switched off:
 
@@ -73,22 +71,14 @@ Leave switched off:
 - Workflow permissions: Read repository contents permission. Each workflow asks
   for anything more at the top of its own file.
 
-If an organisation owns this repository, these settings also exist at
-organisation level, and the stricter of the two applies.
+If an organisation owns this repository, these settings also exist at organisation level, and the stricter of the two applies.
 
 ## 5. Add the GPU Machine
 
 `Settings -> Actions -> Runners -> New self-hosted runner`
 
-Follow the instructions on that page. Add the label `gpu`. `self-hosted` is
-applied automatically, and the workflow asks for both.
+Follow the instructions on that page. Add the label `gpu`. `self-hosted` is applied automatically, and the workflow asks for both.
 
-Then add `gpu` back to the `all` group in `.github/scripts/parse-command.sh`,
-where a TODO marks the line. It is left out until the machine exists so that
-`/test all` cannot wait on a runner that is not there.
+Then add `gpu` back to the `all` group in `.github/scripts/parse-command.sh`, where a TODO marks the line. It is left out until the machine exists so that `/test all` cannot wait on a runner that is not there.
 
-Until this is done, do not use `/test gpu`. GitHub allows a job to sit in the
-queue waiting for a self-hosted runner for 24 hours before giving up, and the
-hour long timeout on the job does not apply, because that limits how long a job
-may run rather than how long it may wait. No result comment is posted until the
-queue time runs out.
+Until this is done, do not use `/test gpu`. GitHub allows a job to sit in the queue waiting for a self-hosted runner for 24 hours before giving up, and the hour long timeout on the job does not apply, because that limits how long a job may run rather than how long it may wait. No result comment is posted until the queue time runs out.

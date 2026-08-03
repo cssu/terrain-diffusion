@@ -16,6 +16,7 @@ COMPONENT_MODULES = [
     "terrain_diffusion.sampler",
     "terrain_diffusion.store",
     "terrain_diffusion.orchestration",
+    "terrain_diffusion.service",
     "terrain_diffusion.cli",
     "terrain_diffusion.benchmark",
 ]
