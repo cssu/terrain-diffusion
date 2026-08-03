@@ -16,7 +16,7 @@ class TestIntroductory:
     @pytest.fixture
     def user_list(self):
         return [
-            # add your usernames here
+            "Zain-Mahmoud",
             "kurbydoo",
             "DanisLol",
         ]
@@ -31,10 +31,18 @@ class TestIntroductory:
 
         assert counter == n * (n - 1) // 2, "Check arithmetic sum"
 
-        assert len(user_list) == 2
+        assert len(user_list) == 3
 
     ### Add your tests below, follow the format above
     def test_danislol(self, user_list):
         assert 2 + 2 == 4, "basic math"
 
         assert True is True
+
+    def test_Zain_Mahmoud(self, user_list):
+
+        sorted_list = sorted(user_list)
+        assert all(sorted_list[0] <= x for x in user_list), "Check sorted"
+
+        num_list = range(15)
+        assert all((2 * x) % 2 == 0 for x in num_list), "Check even"
