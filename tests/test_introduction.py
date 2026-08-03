@@ -38,4 +38,3 @@ class TestIntroductory:
         assert 2 + 2 == 4, "basic math"
 
         assert True is True
-        
