@@ -46,7 +46,7 @@ fi
 
 echo
 echo "==> Checking code style (ruff check)"
-if ! uv run ruff check "${check_format[@]}" .; then
+if ! uv run ruff check "${check_format[@]:-}" .; then
   echo
   echo "Found style problems. Many can be fixed automatically with:" >&2
   echo "  scripts/format-check.sh --fix" >&2
