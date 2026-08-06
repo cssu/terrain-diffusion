@@ -15,10 +15,7 @@ import pytest
 class TestIntroductory:
     @pytest.fixture
     def user_list(self):
-        return [
-            "Zain-Mahmoud",
-            "kurbydoo",
-        ]
+        return ["Zain-Mahmoud", "kurbydoo", "mouftz"]
 
     def test_kurbydoo(self, user_list):
         assert 1 + 1 == 2, "Somthing went really wrong"
@@ -30,7 +27,7 @@ class TestIntroductory:
 
         assert counter == n * (n - 1) // 2, "Check arithmetic sum"
 
-        assert len(user_list) == 2
+        assert len(user_list) == 3
 
     ### Add your tests below, follow the format above
 
@@ -41,3 +38,6 @@ class TestIntroductory:
 
         num_list = range(15)
         assert all((2 * x) % 2 == 0 for x in num_list), "Check even"
+
+    def test_mouftz(self, user_list):
+        assert "racecar" == "racecar"[::-1], "Check palindrome"
