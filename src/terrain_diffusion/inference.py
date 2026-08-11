@@ -16,8 +16,10 @@ Neighbours and communication
 - It loads weights from the external model weights download.
 - It runs on the GPU compute node.
 """
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
+
 
 class TerrainModel(ABC):
 
@@ -26,7 +28,7 @@ class TerrainModel(ABC):
         """
         Generate an output patch (C, H, W) from an input patch (C, H, W) using the model
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @classmethod
     @abstractmethod
@@ -34,8 +36,8 @@ class TerrainModel(ABC):
         """
         Load a model stored in model_path
         """
-        raise NotImplemented
-    
+        raise NotImplementedError
+
     def __call__(self, patch: np.ndarray) -> np.ndarray:
         return self.generate(patch)
 

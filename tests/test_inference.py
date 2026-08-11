@@ -2,9 +2,11 @@
 Tests inference interface by instantiating mock models
 and implementing the `generate` function
 """
-from terrain_diffusion.inference import TerrainModel
 import numpy as np
 import pytest
+
+from terrain_diffusion.inference import TerrainModel
+
 
 class MockTerrainModel(TerrainModel):
     """
