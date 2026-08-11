@@ -2,6 +2,7 @@
 Tests inference interface by instantiating mock models
 and implementing the `generate` function
 """
+
 import numpy as np
 import pytest
 
@@ -12,9 +13,10 @@ class MockTerrainModel(TerrainModel):
     """
     Mock model implementing the TerrainModel abstract class
     """
+
     def generate(self, patch: np.ndarray) -> np.ndarray:
         """
-        Generate and output patch (C, H, W) from the input patch 
+        Generate an output patch (C, H, W) from the input patch
         by multiplying by 2
         """
         return patch * 2

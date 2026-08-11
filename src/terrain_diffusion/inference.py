@@ -16,13 +16,13 @@ Neighbours and communication
 - It loads weights from the external model weights download.
 - It runs on the GPU compute node.
 """
+
 from abc import ABC, abstractmethod
 
 import numpy as np
 
 
 class TerrainModel(ABC):
-
     @abstractmethod
     def generate(self, patch: np.ndarray) -> np.ndarray:
         """
@@ -40,4 +40,3 @@ class TerrainModel(ABC):
 
     def __call__(self, patch: np.ndarray) -> np.ndarray:
         return self.generate(patch)
-
