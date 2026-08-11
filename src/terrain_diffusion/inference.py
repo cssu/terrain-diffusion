@@ -16,3 +16,26 @@ Neighbours and communication
 - It loads weights from the external model weights download.
 - It runs on the GPU compute node.
 """
+import numpy as np
+from abc import ABC, abstractmethod
+
+class TerrainModel(ABC):
+
+    @abstractmethod
+    def generate(self, patch: np.ndarray) -> np.ndarray:
+        """
+        Generate an output patch (C, H, W) from an input patch (C, H, W) using the model
+        """
+        raise NotImplemented
+
+    @classmethod
+    @abstractmethod
+    def load_model(cls, model_path: str) -> TerrainModel:
+        """
+        Load a model stored in model_path
+        """
+        raise NotImplemented
+    
+    def __call__(self, patch: np.ndarray) -> np.ndarray:
+        return self.generate(patch)
+
