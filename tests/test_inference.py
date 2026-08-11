@@ -39,7 +39,7 @@ class TestTerrainModel:
         assert isinstance(MockTerrainModel.load_model("my_model"), TerrainModel)
 
     def test_generate(self, initial_model):
-        input_patch = np.ones((3, 5, 10)) # 10x5 image with 3 channels
+        input_patch = np.ones((3, 5, 10))  # 10x5 image with 3 channels
 
         actual = initial_model(input_patch)
         expected = 2 * input_patch
