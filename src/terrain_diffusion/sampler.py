@@ -10,3 +10,17 @@ Neighbours and communication
 - Asks the Model Pipeline to clean patches.
 - Writes results into the Terrain Store and reads them back.
 """
+
+# What value does the window sampler take from generation orchestration?  
+# Seed, Region Size, and Region coordinates
+
+# What does it expect from the model inference? 
+# It gives a noisy patch to the model and gets a processed full resolution onne back
+
+# What does the sampler generate? 
+# The sampler generates noise, overlapping windows over region, processes each one through model pipleine, then stores in terrain cache. Terrain Store makes and and returns heightgrid (2D numpy array).
+
+# What do we store in the terrain cache? 
+# It holds weight grids for tiles being generated and finished (Sum grid: running total of value × weight and Weight grid: running total of weight)
+
+
