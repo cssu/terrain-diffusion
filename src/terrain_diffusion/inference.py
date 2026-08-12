@@ -54,13 +54,13 @@ class TerrainModel[InputT: ModelInput, OutputT: ModelOutput](ABC):
         """
         raise NotImplementedError
 
-    def __call__(self, patch: InputT) -> OutputT:
-        return self.predict(patch)
-
 
 @dataclass
 class MockCoreModelInput(ModelInput):
     patch: np.ndarray
+
+    def __post_init__(self):
+        assert self.patch.shape == PATCH_SIZE, "invalid input patch shape"
 
     def __eq__(self, other: MockCoreModelInput):
         return np.array_equal(self.patch, other.patch)
@@ -70,6 +70,12 @@ class MockCoreModelInput(ModelInput):
 class MockCoreModelOutput(ModelOutput):
     low_res_grid: np.ndarray
     latent_map: np.ndarray
+
+    def __post_init__(self):
+        assert self.latent_map.shape == LATENT_MAP_SIZE, "invalid latent map size"
+        assert self.low_res_grid.shape == (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8), (
+            "invalid low resolution grid shape"
+        )
 
     def __eq__(self, other: MockCoreModelInput):
         return np.array_equal(self.low_res_grid, other.low_res_grid) and np.array_equal(
@@ -81,6 +87,9 @@ class MockCoreModelOutput(ModelOutput):
 class MockDecoderModelInput(ModelInput):
     latent_map: np.ndarray
 
+    def __post_init__(self):
+        assert self.latent_map.shape == LATENT_MAP_SIZE, "invalid latent map size"
+
     def __eq__(self, other: MockDecoderModelInput):
         return np.array_equal(self.latent_map, other.latent_map)
 
@@ -88,6 +97,9 @@ class MockDecoderModelInput(ModelInput):
 @dataclass
 class MockDecoderModelOutput(ModelOutput):
     full_res_grid: np.ndarray
+
+    def __post_init__(self):
+        assert self.full_res_grid.shape == PATCH_SIZE, "invalid full resolution grid size"
 
     def __eq__(self, other: MockCoreModelOutput):
         return np.array_equal(self.full_res_grid, other.full_res_grid)
@@ -108,9 +120,6 @@ class MockCoreModel(TerrainModel[MockCoreModelInput, MockCoreModelOutput]):
     def load_weights(self, model_path: str):
         self.weights = np.ones((3, 4, 5))
 
-    def __call__(self, input: MockCoreModelInput) -> MockCoreModelOutput:
-        return self.predict(input)
-
 
 class MockDecoderModel(TerrainModel[MockDecoderModelInput, MockDecoderModelOutput]):
     weights: np.ndarray
@@ -126,14 +135,11 @@ class MockDecoderModel(TerrainModel[MockDecoderModelInput, MockDecoderModelOutpu
     def load_weights(self, model_path: str):
         self.weights = np.ones((3, 4, 5))
 
-    def __call__(self, input: MockDecoderModel) -> MockDecoderModel:
-        return self.predict(input)
+
+MODELS = {"decoder": MockDecoderModel, "core": MockCoreModel}
 
 
 def load_model(model_name: str) -> TerrainModel:
-    if model_name == "decoder":
-        return MockDecoderModel()
-    elif model_name == "core":
-        return MockCoreModel()
-    else:
-        raise ValueError("Invalid model")
+    if model_name not in MODELS:
+        raise ValueError("invalid model name")
+    return MODELS[model_name]()
