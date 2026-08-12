@@ -6,42 +6,66 @@ and implementing the `generate` function
 import numpy as np
 import pytest
 
-from terrain_diffusion.inference import TerrainModel
-
-
-class MockTerrainModel(TerrainModel):
-    """
-    Mock model implementing the TerrainModel abstract class
-    """
-
-    def generate(self, patch: np.ndarray) -> np.ndarray:
-        """
-        Generate an output patch (C, H, W) from the input patch
-        by multiplying by 2
-        """
-        return patch * 2
-
-    @classmethod
-    def load_model(cls, model_path):
-        print(f"loaded model: {model_path}")
-        return MockTerrainModel()
-
-    def __call__(self, patch: np.ndarray) -> np.ndarray:
-        return self.generate(patch)
+from terrain_diffusion.inference import (
+    LATENT_MAP_SIZE,
+    PATCH_SIZE,
+    MockCoreModel,
+    MockCoreModelInput,
+    MockCoreModelOutput,
+    MockDecoderModel,
+    MockDecoderModelInput,
+    MockDecoderModelOutput,
+    load_model,
+)
 
 
 class TestTerrainModel:
     @pytest.fixture
-    def initial_model(self) -> MockTerrainModel:
-        return MockTerrainModel()
+    def initial_decoder(self) -> MockDecoderModel:
+        return MockDecoderModel()
 
-    def test_load(self):
-        assert isinstance(MockTerrainModel.load_model("my_model"), TerrainModel)
+    @pytest.fixture
+    def initial_core(self) -> MockCoreModel:
+        return MockCoreModel()
 
-    def test_generate(self, initial_model):
-        input_patch = np.ones((3, 5, 10))  # 10x5 image with 3 channels
+    def test_load_model(self):
+        assert isinstance(load_model("decoder"), MockDecoderModel), (
+            "model does not load correct decoder"
+        )
+        assert isinstance(load_model("core"), MockCoreModel), "model does not load correct core"
 
-        actual = initial_model(input_patch)
-        expected = 2 * input_patch
+    def test_predict_core(self, initial_core):
+        input = MockCoreModelInput(np.ones(PATCH_SIZE))
 
-        assert np.array_equal(actual, expected), "patches are not equal"
+        actual = initial_core(input)
+        actual_2 = initial_core(input)
+
+        double = 2 * input.patch
+
+        expected_low_res = np.resize(double, (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8))
+        expected_latent = np.resize(double, LATENT_MAP_SIZE)
+        expected = MockCoreModelOutput(expected_low_res, expected_latent)
+
+        assert actual == expected, "predictions are not equal"
+        assert actual == actual_2, "model return different predictions on same input"
+        assert actual.low_res_grid.shape == (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8), (
+            "low resolution map shape is not patch size // 8"
+        )
+        assert actual.latent_map.shape == LATENT_MAP_SIZE, "latent map size is not correct"
+
+    def test_predict_decoder(self, initial_decoder):
+        input = MockDecoderModelInput(np.ones(LATENT_MAP_SIZE))
+
+        actual = initial_decoder(input)
+        actual_2 = initial_decoder(input)
+
+        double = 2 * input.latent_map
+
+        expected_full_res = np.resize(double, PATCH_SIZE)
+        expected = MockDecoderModelOutput(expected_full_res)
+
+        assert actual == expected, "predictions are not equal"
+        assert actual == actual_2, "model return different predictions on same input"
+        assert actual.full_res_grid.shape == PATCH_SIZE, (
+            "full resolution map does not match patch size"
+        )
