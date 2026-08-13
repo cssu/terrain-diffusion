@@ -28,6 +28,24 @@ class TestTerrainModel:
     def initial_core(self) -> MockCoreModel:
         return MockCoreModel()
 
+    def test_core_input_generation(self):
+        with pytest.raises(AssertionError):
+            MockCoreModelInput(np.ones((1, 1)))
+
+    def test_core_output_generation(self):
+        with pytest.raises(AssertionError):
+            MockCoreModelOutput(np.ones((1, 1)), np.ones(LATENT_MAP_SIZE))
+        with pytest.raises(AssertionError):
+            MockCoreModelOutput(np.ones((PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8)), np.ones((1, 1)))
+
+    def test_decoder_input_generation(self):
+        with pytest.raises(AssertionError):
+            MockDecoderModelInput(np.ones((1, 1)))
+
+    def test_decoder_output_generation(self):
+        with pytest.raises(AssertionError):
+            MockDecoderModelOutput(np.ones((1, 1)))
+
     def test_load_model(self):
         assert isinstance(load_model("decoder"), MockDecoderModel), (
             "model does not load correct decoder"
