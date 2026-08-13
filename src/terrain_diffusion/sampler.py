@@ -23,7 +23,8 @@ Neighbours and communication
 # What do we store in the terrain cache? 
 # It holds weight grids for tiles being generated and finished (Sum grid: running total of value × weight and Weight grid: running total of weight)
 
-import numpy as np
+
+# import numpy as np
 
 def window_positions(region_height, region_width, window_size, step) -> list[tuple]:
     """ Takes a region height and width, a window size, and a step size, and returns the list of top left positions to place windows at.
