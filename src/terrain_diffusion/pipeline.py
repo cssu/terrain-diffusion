@@ -28,9 +28,9 @@ from terrain_diffusion import encoding
 class ModelPipeline:
 
   def generate(self, patch: np.ndarray) -> np.ndarray:
-    return self.blur(patch)
+    return self.blur_patch(patch)
 
-  def blur(self, grid: np.ndarry) -> np.ndarray:
+  def blur_patch(self, grid: np.ndarry) -> np.ndarray:
     ret_grid = np.zeros(grid.shape)
     for (i,j) in np.ndindex(grid.shape):
 
