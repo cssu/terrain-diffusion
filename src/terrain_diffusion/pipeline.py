@@ -19,3 +19,38 @@ Neighbours and communication
 - It asks Model Inference to run a named model on a patch.
 - It asks Elevation Encoding to turn the models' base and detail outputs into real elevations.
 """
+import numpy as np
+import itertools
+
+from terrain_diffusion.inference import load_model
+from terrain_diffusion import encoding
+
+class ModelPipeline:
+
+  def generate(self, patch: np.ndarray) -> np.ndarray:
+    return self.blur(patch)
+
+  def blur(self, grid: np.ndarry) -> np.ndarray:
+    ret_grid = np.zeros(grid.shape)
+    for (i,j) in np.ndindex(grid.shape):
+
+      top = max(0, i-1)
+      bottom = min(grid.shape[0] - 1, i+1)
+      left = max(0, j-1)
+      right = min(grid.shape[1] - 1, j+1)
+      all_indices = set(itertools.product(range(top, bottom + 1), range(left, right+1)))
+      valid_indices = [(x,y) for (x,y) in all_indices if (x, y) != (i, j)]
+
+      ret_grid[i][j] = sum(grid[x][y] for (x,y) in valid_indices) / len(valid_indices)
+    return ret_grid
+
+
+  def clean_patch(patch: np.ndarray) -> np.ndarray:
+    core, decoder = load_model("core"), load_model("decoder")
+
+    core_output = core.predict(patch)
+    decoder_output = decoder.predict(core_output.latent_map)
+
+    #TODO: update functions and output once elevation encoding is complete
+    some_output = encoding.some_function(core_output.low_res_grid, decoder_output.full_res_grid)
+    return some_output
