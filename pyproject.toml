@@ -8,7 +8,9 @@ requires-python = ">=3.14"
 # Packages the project itself needs in order to run
 # TODO: add entries here as the project starts needing them,
 # then run `uv sync` to install and update uv.lock
-dependencies = []
+dependencies = [
+    "numpy>=2.5.2",
+]
 
 # The commands the project installs. `uv run terrain-diffusion` runs main() in
 # src/terrain_diffusion/cli.py.
