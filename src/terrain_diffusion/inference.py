@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import ClassVar
 
 import numpy as np
 
@@ -58,9 +59,10 @@ class TerrainModel[InputT: ModelInput, OutputT: ModelOutput](ABC):
 @dataclass
 class MockCoreModelInput(ModelInput):
     patch: np.ndarray
+    patch_shape: ClassVar[tuple] = PATCH_SIZE
 
     def __post_init__(self):
-        assert self.patch.shape == PATCH_SIZE, "invalid input patch shape"
+        assert self.patch.shape == self.patch_shape, "invalid input patch shape"
 
     def __eq__(self, other: MockCoreModelInput):
         return np.array_equal(self.patch, other.patch)
@@ -70,10 +72,12 @@ class MockCoreModelInput(ModelInput):
 class MockCoreModelOutput(ModelOutput):
     low_res_grid: np.ndarray
     latent_map: np.ndarray
+    low_res_grid_shape: ClassVar[tuple] = (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8)
+    latent_map_shape: ClassVar[tuple] = LATENT_MAP_SIZE
 
     def __post_init__(self):
-        assert self.latent_map.shape == LATENT_MAP_SIZE, "invalid latent map size"
-        assert self.low_res_grid.shape == (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8), (
+        assert self.latent_map.shape == self.latent_map_shape, "invalid latent map size"
+        assert self.low_res_grid.shape == self.low_res_grid_shape, (
             "invalid low resolution grid shape"
         )
 
@@ -86,9 +90,10 @@ class MockCoreModelOutput(ModelOutput):
 @dataclass
 class MockDecoderModelInput(ModelInput):
     latent_map: np.ndarray
+    latent_map_shape: ClassVar[tuple] = LATENT_MAP_SIZE
 
     def __post_init__(self):
-        assert self.latent_map.shape == LATENT_MAP_SIZE, "invalid latent map size"
+        assert self.latent_map.shape == self.latent_map_shape, "invalid latent map size"
 
     def __eq__(self, other: MockDecoderModelInput):
         return np.array_equal(self.latent_map, other.latent_map)
@@ -97,9 +102,12 @@ class MockDecoderModelInput(ModelInput):
 @dataclass
 class MockDecoderModelOutput(ModelOutput):
     full_res_grid: np.ndarray
+    full_res_grid_shape: ClassVar[tuple] = PATCH_SIZE
 
     def __post_init__(self):
-        assert self.full_res_grid.shape == PATCH_SIZE, "invalid full resolution grid size"
+        assert self.full_res_grid.shape == self.full_res_grid_shape, (
+            "invalid full resolution grid size"
+        )
 
     def __eq__(self, other: MockCoreModelOutput):
         return np.array_equal(self.full_res_grid, other.full_res_grid)
