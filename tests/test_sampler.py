@@ -2,12 +2,10 @@
 Testing for window blending sampler. 
 """
 
-import pytest
 from terrain_diffusion.sampler import window_positions
 
 
 class TestSampler:
-    @pytest.fixture
 
     def test_all_covered(self):
         "Assert every cell in the region is covered by at least one window"
@@ -16,10 +14,9 @@ class TestSampler:
         window = 2
         step = 1
         positions = window_positions(height, width, window, step)
-        assert all(any(window_r <= row < window_r + window
-                        and window_c <= column < window_c + window
-                        for window_r, window_c in positions) 
-                        for row in range(height) for column in range(width))
+        assert all(any(window_r <= row < window_r + window and window_c <= column < window_c + window 
+                       for window_r, window_c in positions) 
+                       for row in range(height) for column in range(width))
 
     def test_exceed_region(self):
         "Assert no window exceeds past the region"
