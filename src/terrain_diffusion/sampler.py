@@ -24,7 +24,7 @@ Neighbours and communication
 # It holds weight grids for tiles being generated and finished (Sum grid: running total of value × weight and Weight grid: running total of weight)
 
 
-# import numpy as np
+import numpy as np
 
 def window_positions(region_height: int, region_width: int, window_size: int, step: int) -> list[tuple[int, int]]:
     """ Takes a region height and width, a window size, and a step size, and returns the list of top left positions to place windows at.
@@ -68,3 +68,10 @@ def window_positions(region_height: int, region_width: int, window_size: int, st
             positions.append((row, column))
 
     return positions
+
+
+def weight_grid(height: int, width: int) -> np.ndarray:
+    """Create a function that returns a grid of weights the size of a patch, since the weights get applied to what is written into the store.
+    Weights should be largest in the middle and get smaller toward the edges. Every weight must be greater than zero. 
+    A weight of exactly zero means a cell in the corner of a region, covered by only one window, can never be filled in.
+    The same grid is used for every window so it only needs to be worked out once."""

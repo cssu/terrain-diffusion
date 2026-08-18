@@ -2,10 +2,11 @@
 Testing for window blending sampler. 
 """
 
-from terrain_diffusion.sampler import window_positions
+from terrain_diffusion.sampler import window_positions, weight_grid
+import numpy as np
 
 
-class TestSampler:
+class TestWindowPositions:
 
     def test_all_covered(self):
         "Assert every cell in the region is covered by at least one window"
@@ -40,3 +41,26 @@ class TestSampler:
             (0, 0), (0, 3), (0, 4),
             (3, 0), (3, 3), (3, 4),
             (4, 0), (4, 3), (4, 4)]
+
+
+
+class TestWeights:
+
+    def test_grid_equal_patch(self):
+        "Assert the grid is the size of a patch"
+        weights = weight_grid(5, 5)
+        assert weights.shape == (5, 7)
+
+    def test_palidrome(self):
+        "Assert it reads the same forwards and backwards in both directions"
+        weights = weight_grid(5, 5)
+        assert np.array_equal(weights, weights[::-1])
+
+    def test_large_middle(self):
+        "Assert the largest value is in the middle"
+
+    def test_edges_smaller(self):
+        "Assert values at the edges are smaller than values in the middle"
+
+    def test_greater_zero(self):
+        "Assert every value is greater than zero"
