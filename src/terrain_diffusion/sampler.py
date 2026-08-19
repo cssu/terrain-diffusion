@@ -10,6 +10,3 @@ Neighbours and communication
 - Asks the Model Pipeline to clean patches.
 - Writes results into the Terrain Store and reads them back.
 """
-def hi():
-    print("bye")
-    print("bye")
