@@ -62,6 +62,11 @@ jobs:
 
       - name: Run the quick tests
         run: scripts/test-check.sh python
+      
+      - name: Upload results to coveralls.ip
+        run: coveralls 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # TODO: update script for web side when added
   web:
@@ -95,13 +100,3 @@ jobs:
       - name: Run the web checks
         if: steps.detect.outputs.present == 'true'
         run: scripts/web-check.sh
-
-  coveralls:
-    name: coveralls
-    runs-on: ubuntu-latest 
-
-    steps:
-      - name: Submit coverage report to coveralls.info
-        run: coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
