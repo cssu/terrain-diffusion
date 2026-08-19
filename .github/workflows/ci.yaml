@@ -95,3 +95,13 @@ jobs:
       - name: Run the web checks
         if: steps.detect.outputs.present == 'true'
         run: scripts/web-check.sh
+
+  coveralls:
+    name: coveralls
+    runs-on: ubuntu-latest 
+
+    steps:
+      - name: Submit coverage report to coveralls.info
+        run: scripts/upload-coveralls.sh 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
