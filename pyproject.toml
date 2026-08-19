@@ -72,3 +72,13 @@ markers = [
     "slow: use for slow tests, runs on /test slow comment",
     "gpu: use for GPU tests, runs on  /test gpu comment",
 ]
+
+
+# ---------------------------------------------------------------------------
+# coverage: ignore specific files
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+omit = [
+    ".*" #ignore any dot-files
+]
