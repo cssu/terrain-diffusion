@@ -13,3 +13,6 @@ Neighbours and communication
 
 def f():
     print("this is a test")
+
+def g():
+    print("this is also a test")
