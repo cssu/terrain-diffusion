@@ -104,7 +104,17 @@ def weight_grid(height: int, width: int) -> np.ndarray:
     return weights
 
 
+
 def starting_noise(seed: int, height: int, width: int) -> np.ndarray:
     "Takes a seed and a canvas size and returns a grid of random numbers that size"
     generator = np.random.default_rng(seed)
     return generator.random((height, width))
+
+
+
+def produce_region(seed: int, height: int, width: int, window_size: int, step: int, pipeline, store) -> np.ndarray:
+    """Make noise canvas of given dimensions. or each window position, cut the window out of the noise canvas, hand it to pipeline (#23).
+    Store the processed output from pipeline and weights in Terrain Store, read the finished height grid from store and return it. 
+    """
+
+    

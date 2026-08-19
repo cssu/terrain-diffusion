@@ -128,3 +128,18 @@ class TestSeed:
         width = 20
         noise = starting_noise(seed, height, width)
         assert noise.shape == (height, width)
+
+
+class TestRegionProduction:
+    def test_all_fives(self):
+        """Assert the finished grid is all fives everywhere, including the overlaps and the corners. 
+        If the overlaps read higher then the weights are not being divided out"""
+
+    def test_full_size(self):
+        """Assert the finished grid is the region's full resolution size"""
+
+    def test_once_per_windo(self):
+        """Assert the fake pipeline was called once per window position and no more"""
+
+    def test_same_seed_grid(self):
+        """Assert the same seed and region run twice give identical grids"""
