@@ -106,3 +106,5 @@ def weight_grid(height: int, width: int) -> np.ndarray:
 
 def starting_noise(seed: int, height: int, width: int) -> np.ndarray:
     "Takes a seed and a canvas size and returns a grid of random numbers that size"
+    generator = np.random.default_rng(seed)
+    return generator.random((height, width))
