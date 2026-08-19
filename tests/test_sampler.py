@@ -58,13 +58,13 @@ class TestWeights:
         height = 10
         width = 20
         weights = weight_grid(height, width)
-        assert np.array_equal(weights, weights[::-1])
-        # assert vertically
+        assert np.array_equal(weights, weights[::-1, :]) #vertical
+        assert np.array_equal(weights, weights[:, ::-1]) #horizontal
 
     def test_large_middle(self):
         "Assert the largest value is in the middle"
-        height = 10
-        width = 20
+        height = 11
+        width = 21
         weights = weight_grid(height, width)
 
         # middle
@@ -75,6 +75,24 @@ class TestWeights:
 
     def test_edges_smaller(self):
         "Assert values at the edges are smaller than values in the middle"
+        height = 11
+        width = 21
+        weights = weight_grid(height, width)
+
+        # middle
+        center_row = height // 2
+        center_column = width // 2
+        middle_val = weights[center_row, center_column]
+
+        # R/L edges
+        assert all(weights[x,0] < middle_val for x in range(height))
+        assert all(weights[x,width-1] < middle_val for x in range(height))
+
+        # T/B edges
+        assert all(weights[0, y] < middle_val for y in range(width))
+        assert all(weights[height - 1, y] < middle_val for y in range(width))
 
     def test_greater_zero(self):
         "Assert every value is greater than zero"
+        weights = weight_grid(10, 20)
+        assert np.all(weights > 0)

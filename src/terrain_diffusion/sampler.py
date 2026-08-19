@@ -77,3 +77,4 @@ def weight_grid(height: int, width: int) -> np.ndarray:
     The same grid is used for every window so it only needs to be worked out once."""
 
     #numpy array: [[row 1 contents], [row 2 contents]]
+    # indexing in 2D Array: array[row, column]
