@@ -70,11 +70,35 @@ def window_positions(region_height: int, region_width: int, window_size: int, st
     return positions
 
 
+
 def weight_grid(height: int, width: int) -> np.ndarray:
     """Create a function that returns a grid of weights the size of a patch, since the weights get applied to what is written into the store.
     Weights should be largest in the middle and get smaller toward the edges. Every weight must be greater than zero. 
     A weight of exactly zero means a cell in the corner of a region, covered by only one window, can never be filled in.
     The same grid is used for every window so it only needs to be worked out once."""
 
+    #NOTES:
+    # Distance-Based Weighting For Vignettes or Radial Masks - linear distance decay function: each (row, column) = 1 - distance to center/maximum patch radius 
     # numpy array: [[row 1 contents], [row 2 contents]]
     # indexing in 2D Array: array[row, column]
+
+    # create 1D arrays
+    rows = np.arange(height)
+    columns = np.arange(width)
+
+    # find center
+    center_row = (height - 1) / 2   # -1 because we start from 0
+    center_column = (width - 1) / 2
+
+    # distance from center
+    row_distance = np.abs(rows - center_row)
+    column_distance = np.abs(columns - center_column)
+
+    # weight: apply formula. multiplied 0.9 so values stay above 0
+    row_weight = 1 - 0.9 * row_distance / (height / 2)
+    column_weight = 1 - 0.9 * column_distance / (width / 2)
+
+    # combine 
+    weights = np.outer(row_weight, column_weight)
+
+    return weights
