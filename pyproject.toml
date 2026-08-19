@@ -80,5 +80,5 @@ markers = [
 
 [tool.coverage.run]
 omit = [
-    "./.*/" # ignore any dot directories
+    # add omissions here
 ]
