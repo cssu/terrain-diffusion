@@ -138,7 +138,7 @@ class TestRegionProduction:
     def test_full_size(self):
         """Assert the finished grid is the region's full resolution size"""
 
-    def test_once_per_windo(self):
+    def test_once_per_window(self):
         """Assert the fake pipeline was called once per window position and no more"""
 
     def test_same_seed_grid(self):
