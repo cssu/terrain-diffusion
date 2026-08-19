@@ -48,16 +48,30 @@ class TestWeights:
 
     def test_grid_equal_patch(self):
         "Assert the grid is the size of a patch"
-        weights = weight_grid(5, 5)
-        assert weights.shape == (5, 7)
+        height = 10
+        width = 20
+        weights = weight_grid(height, width)
+        assert weights.shape == (height, width)
 
     def test_palidrome(self):
         "Assert it reads the same forwards and backwards in both directions"
-        weights = weight_grid(5, 5)
+        height = 10
+        width = 20
+        weights = weight_grid(height, width)
         assert np.array_equal(weights, weights[::-1])
+        # assert vertically
 
     def test_large_middle(self):
         "Assert the largest value is in the middle"
+        height = 10
+        width = 20
+        weights = weight_grid(height, width)
+
+        # middle
+        center_row = height // 2
+        center_column = width // 2
+
+        assert weights[center_row, center_column] == weights.max()
 
     def test_edges_smaller(self):
         "Assert values at the edges are smaller than values in the middle"

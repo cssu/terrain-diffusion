@@ -75,3 +75,5 @@ def weight_grid(height: int, width: int) -> np.ndarray:
     Weights should be largest in the middle and get smaller toward the edges. Every weight must be greater than zero. 
     A weight of exactly zero means a cell in the corner of a region, covered by only one window, can never be filled in.
     The same grid is used for every window so it only needs to be worked out once."""
+
+    #numpy array: [[row 1 contents], [row 2 contents]]
