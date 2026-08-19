@@ -12,3 +12,4 @@ Neighbours and communication
 """
 def hi():
     print("bye")
+    print("bye")
