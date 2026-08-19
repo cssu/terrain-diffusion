@@ -2,7 +2,7 @@
 Testing for window blending sampler. 
 """
 
-from terrain_diffusion.sampler import window_positions, weight_grid
+from terrain_diffusion.sampler import window_positions, weight_grid, starting_noise
 import numpy as np
 
 
@@ -103,11 +103,28 @@ class TestSeed:
 
     def test_same_seed(self):
         """Assert the same seed twice gives identical grids."""
-        
+        seed = 123
+        height = 10
+        width = 20
+        noise1 = starting_noise(seed, height, width)
+        noise2 = starting_noise(seed, height, width)
+        assert np.array_equal(noise1, noise2)
     
     def test_diff_seed(self):
         """Assert two different seeds give different grids."""
+        seed1 = 123
+        seed2 = 456
+        height = 10
+        width = 20
+        noise1 = starting_noise(seed1, height, width)
+        noise2 = starting_noise(seed2, height, width)
+        assert not np.array_equal(noise1, noise2)
 
     
     def test_right_size(self):
         """Assert the grid is the size asked for"""
+        seed = 123
+        height = 10
+        width = 20
+        noise = starting_noise(seed, height, width)
+        assert noise.shape == (height, width)
