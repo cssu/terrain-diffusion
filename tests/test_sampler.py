@@ -96,3 +96,18 @@ class TestWeights:
         "Assert every value is greater than zero"
         weights = weight_grid(10, 20)
         assert np.all(weights > 0)
+        
+
+
+class TestSeed:
+
+    def test_same_seed(self):
+        """Assert the same seed twice gives identical grids."""
+        
+    
+    def test_diff_seed(self):
+        """Assert two different seeds give different grids."""
+
+    
+    def test_right_size(self):
+        """Assert the grid is the size asked for"""
