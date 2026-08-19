@@ -102,6 +102,6 @@ jobs:
 
     steps:
       - name: Submit coverage report to coveralls.info
-        run: scripts/upload-coveralls.sh 
+        run: coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
