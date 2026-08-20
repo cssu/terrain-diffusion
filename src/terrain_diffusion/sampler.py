@@ -114,9 +114,8 @@ def starting_noise(seed: int, height: int, width: int) -> np.ndarray:
 
 def produce_region(seed: int, height: int, width: int, window_size: int, step: int, pipeline, store) -> np.ndarray:
     """Make noise canvas of given dimensions. Make noise and weight grid. 
-    For each window position, cut the window out of the noise canvas, hand it to pipeline (#23), store the processed output from pipeline and weights in Terrain Store.
-    Read the finished height grid from store and return it. 
-    """
+    For each window position, cut the window out of the noise canvas, send it to pipeline (#23), add the processed output and its weight to Terrain Store (at that position).
+    Read the finished height grid from store and return it. """
 
     noise = starting_noise(seed, height, width)
 
