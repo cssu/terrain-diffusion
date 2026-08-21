@@ -1,14 +1,14 @@
 """
-Testing for window blending sampler. 
+Testing for window blending sampler.
 """
 
-from terrain_diffusion.sampler import window_positions, weight_grid, starting_noise, produce_region
 import numpy as np
 import pytest
 
+from terrain_diffusion.sampler import produce_region, starting_noise, weight_grid, window_positions
+
 
 class TestWindowPositions:
-
     def test_all_covered(self):
         "Assert every cell in the region is covered by at least one window"
         height = 4
@@ -16,9 +16,14 @@ class TestWindowPositions:
         window = 2
         step = 1
         positions = window_positions(height, width, window, step)
-        assert all(any(window_r <= row < window_r + window and window_c <= column < window_c + window 
-                       for window_r, window_c in positions) 
-                       for row in range(height) for column in range(width))
+        assert all(
+            any(
+                window_r <= row < window_r + window and window_c <= column < window_c + window
+                for window_r, window_c in positions
+            )
+            for row in range(height)
+            for column in range(width)
+        )
 
     def test_exceed_region(self):
         "Assert no window exceeds past the region"
@@ -32,21 +37,18 @@ class TestWindowPositions:
     def test_one_window(self):
         "Assert a region exactly one window in size returns one position"
         WindowRegionSize = 4
-        positions = window_positions(WindowRegionSize, WindowRegionSize, WindowRegionSize, WindowRegionSize)
+        positions = window_positions(
+            WindowRegionSize, WindowRegionSize, WindowRegionSize, WindowRegionSize
+        )
         assert len(positions) == 1
 
     def test_not_dividing(self):
         "Assert a region whose size does not divide evenly by the step still covers the far edge"
         positions = window_positions(8, 8, 4, 3)
-        assert positions == [
-            (0, 0), (0, 3), (0, 4),
-            (3, 0), (3, 3), (3, 4),
-            (4, 0), (4, 3), (4, 4)]
-
+        assert positions == [(0, 0), (0, 3), (0, 4), (3, 0), (3, 3), (3, 4), (4, 0), (4, 3), (4, 4)]
 
 
 class TestWeights:
-
     def test_grid_equal_patch(self):
         "Assert the grid is the size of a patch"
         height = 10
@@ -59,8 +61,8 @@ class TestWeights:
         height = 10
         width = 20
         weights = weight_grid(height, width)
-        assert np.array_equal(weights, weights[::-1, :]) #vertical
-        assert np.array_equal(weights, weights[:, ::-1]) #horizontal
+        assert np.array_equal(weights, weights[::-1, :])  # vertical
+        assert np.array_equal(weights, weights[:, ::-1])  # horizontal
 
     def test_large_middle(self):
         "Assert the largest value is in the middle"
@@ -86,8 +88,8 @@ class TestWeights:
         middle_val = weights[center_row, center_column]
 
         # R/L edges
-        assert all(weights[x,0] < middle_val for x in range(height))
-        assert all(weights[x,width-1] < middle_val for x in range(height))
+        assert all(weights[x, 0] < middle_val for x in range(height))
+        assert all(weights[x, width - 1] < middle_val for x in range(height))
 
         # T/B edges
         assert all(weights[0, y] < middle_val for y in range(width))
@@ -97,11 +99,9 @@ class TestWeights:
         "Assert every value is greater than zero"
         weights = weight_grid(10, 20)
         assert np.all(weights > 0)
-        
 
 
 class TestSeed:
-
     def test_same_seed(self):
         """Assert the same seed twice gives identical grids."""
         seed = 123
@@ -110,7 +110,7 @@ class TestSeed:
         noise1 = starting_noise(seed, height, width)
         noise2 = starting_noise(seed, height, width)
         assert np.array_equal(noise1, noise2)
-    
+
     def test_diff_seed(self):
         """Assert two different seeds give different grids."""
         seed1 = 123
@@ -121,7 +121,6 @@ class TestSeed:
         noise2 = starting_noise(seed2, height, width)
         assert not np.array_equal(noise1, noise2)
 
-    
     def test_right_size(self):
         """Assert the grid is the size asked for"""
         seed = 123
@@ -143,34 +142,29 @@ class FakePipeline:
 
 
 class FakeStore:
-    #used ai help for this because store is not part of my ticket
+    # used ai help for this because store is not part of my ticket
     def __init__(self, height, width):
         self.sum_grid = np.zeros((height, width))
         self.weight_grid = np.zeros((height, width))
 
     def add(self, patch, row, column, weights):
-        self.sum_grid[
-            row:row + patch.shape[0],
-            column:column + patch.shape[1]
-        ] += patch * weights
+        self.sum_grid[row : row + patch.shape[0], column : column + patch.shape[1]] += (
+            patch * weights
+        )
 
-        self.weight_grid[
-            row:row + patch.shape[0],
-            column:column + patch.shape[1]
-        ] += weights
+        self.weight_grid[row : row + patch.shape[0], column : column + patch.shape[1]] += weights
 
     def finish(self):
         return self.sum_grid / self.weight_grid
 
-    
-class TestRegionProduction:
 
+class TestRegionProduction:
     @pytest.fixture
     def pipeline(self):
         return FakePipeline()
 
     def test_all_fives(self, pipeline):
-        """Assert the finished grid is all fives everywhere, including the overlaps and the corners. 
+        """Assert the finished grid is all fives everywhere, including the overlaps and the corners.
         If the overlaps read higher then the weights are not being divided out"""
 
         seed = 123
@@ -181,8 +175,9 @@ class TestRegionProduction:
 
         store = FakeStore(height, width)
         result = produce_region(seed, height, width, window_size, step, pipeline, store)
-        assert np.allclose(result, 5)  #All close because was getting float error as some are 4.9999 due to the store 
-
+        assert np.allclose(
+            result, 5
+        )  # All close because was getting float error as some are 4.9999 due to the store
 
     def test_full_size(self, pipeline):
         """Assert the finished grid is the region's full resolution size"""
@@ -197,10 +192,9 @@ class TestRegionProduction:
         result = produce_region(seed, height, width, window_size, step, pipeline, store)
         assert result.shape == (height, width)
 
-
     def test_once_per_window(self, pipeline):
         """Assert the fake pipeline was called once per window position and no more"""
-        
+
         seed = 123
         height = 8
         width = 8
@@ -214,7 +208,6 @@ class TestRegionProduction:
 
         assert pipeline.call_count == len(positions)
 
-
     def test_same_seed_grid(self):
         """Assert the same seed and region run twice give identical grids"""
         height = 8
@@ -225,7 +218,7 @@ class TestRegionProduction:
         store1 = FakeStore(height, width)
         store2 = FakeStore(height, width)
 
-        #because using same pipeline might affect results?
+        # because using same pipeline might affect results?
         pipeline1 = FakePipeline()
         pipeline2 = FakePipeline()
 

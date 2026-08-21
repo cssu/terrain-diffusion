@@ -11,23 +11,25 @@ Neighbours and communication
 - Writes results into the Terrain Store and reads them back.
 """
 
-# What value does the window sampler take from generation orchestration?  
+# What value does the window sampler take from generation orchestration?
 # Seed, Region Size, and Region coordinates
 
-# What does it expect from the model inference? 
+# What does it expect from the model inference?
 # It gives a noisy patch to the model and gets a processed full resolution one back
 
-# What does the sampler generate? 
+# What does the sampler generate?
 # The sampler generates noise, overlapping windows over region, processes each one through model pipleine, then stores in terrain cache. Terrain Store makes and and returns heightgrid (2D numpy array).
 
-# What do we store in the terrain cache? 
+# What do we store in the terrain cache?
 # It holds weight grids for tiles being generated and finished (Sum grid: running total of value × weight and Weight grid: running total of weight)
-
 
 import numpy as np
 
-def window_positions(region_height: int, region_width: int, window_size: int, step: int) -> list[tuple[int, int]]:
-    """ Takes a region height and width, a window size, and a step size, and returns the list of top left positions to place windows at.
+
+def window_positions(
+    region_height: int, region_width: int, window_size: int, step: int
+) -> list[tuple[int, int]]:
+    """Takes a region height and width, a window size, and a step size, and returns the list of top left positions to place windows at.
     The step is smaller than the window, which is what makes them overlap.
     If step does not divide evenly (extends), push last window to row/column of region_cl/row - window_size, so that no window hangs over the edge."""
 
@@ -70,15 +72,14 @@ def window_positions(region_height: int, region_width: int, window_size: int, st
     return positions
 
 
-
 def weight_grid(height: int, width: int) -> np.ndarray:
     """Create a function that returns a grid of weights the size of a patch, since the weights get applied to what is written into the store.
-    Weights should be largest in the middle and get smaller toward the edges. Every weight must be greater than zero. 
+    Weights should be largest in the middle and get smaller toward the edges. Every weight must be greater than zero.
     A weight of exactly zero means a cell in the corner of a region, covered by only one window, can never be filled in.
     The same grid is used for every window so it only needs to be worked out once."""
 
-    #NOTES:
-    # Distance-Based Weighting For Vignettes or Radial Masks - linear distance decay function: each (row, column) = 1 - distance to center/maximum patch radius 
+    # NOTES:
+    # Distance-Based Weighting For Vignettes or Radial Masks - linear distance decay function: each (row, column) = 1 - distance to center/maximum patch radius
     # numpy array: [[row 1 contents], [row 2 contents]]
     # indexing in 2D Array: array[row, column]
 
@@ -86,8 +87,8 @@ def weight_grid(height: int, width: int) -> np.ndarray:
     rows = np.arange(height)
     columns = np.arange(width)
 
-    # find center
-    center_row = (height - 1) / 2   # -1 because we start from 0
+    # find center (-1 because we start from 0)
+    center_row = (height - 1) / 2
     center_column = (width - 1) / 2
 
     # distance from center
@@ -98,11 +99,10 @@ def weight_grid(height: int, width: int) -> np.ndarray:
     row_weight = 1 - 0.9 * row_distance / (height / 2)
     column_weight = 1 - 0.9 * column_distance / (width / 2)
 
-    # combine 
+    # combine
     weights = np.outer(row_weight, column_weight)
 
     return weights
-
 
 
 def starting_noise(seed: int, height: int, width: int) -> np.ndarray:
@@ -111,24 +111,24 @@ def starting_noise(seed: int, height: int, width: int) -> np.ndarray:
     return generator.random((height, width))
 
 
-
-def produce_region(seed: int, height: int, width: int, window_size: int, step: int, pipeline, store) -> np.ndarray:
-    """Make noise canvas of given dimensions. Make noise and weight grid. 
+def produce_region(
+    seed: int, height: int, width: int, window_size: int, step: int, pipeline, store
+) -> np.ndarray:
+    """Make noise canvas of given dimensions. Make noise and weight grid.
     For each window position, cut the window out of the noise canvas, send it to pipeline (#23), add the processed output and its weight to Terrain Store (at that position).
-    Read the finished height grid from store and return it. """
+    Read the finished height grid from store and return it."""
 
     noise = starting_noise(seed, height, width)
 
     positions = window_positions(height, width, window_size, step)
-    weights = weight_grid(window_size, window_size) #weight grid made on window_size
+    weights = weight_grid(window_size, window_size)  # weight grid made on window_size
 
     for row, column in positions:
-        window = noise[
-            row:row + window_size,
-            column:column + window_size
-        ]
+        window = noise[row : row + window_size, column : column + window_size]
 
-        processed_patch = pipeline.generate(window) #based on unmerged commit i believe this will be pipeline.generate(window)
+        processed_patch = pipeline.generate(
+            window
+        )  # based on unmerged commit i believe this will be pipeline.generate(window)
 
         store.add(processed_patch, row, column, weights)
 
