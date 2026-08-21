@@ -2,8 +2,9 @@
 Testing for window blending sampler. 
 """
 
-from terrain_diffusion.sampler import window_positions, weight_grid, starting_noise
+from terrain_diffusion.sampler import window_positions, weight_grid, starting_noise, produce_region
 import numpy as np
+import pytest
 
 
 class TestWindowPositions:
@@ -130,11 +131,42 @@ class TestSeed:
         assert noise.shape == (height, width)
 
 
+class FakePipeline:
+    def __init__(self):
+        """For test_once_per_window"""
+        self.call_count = 0
+
+    def generate(self, patch):
+        """Igrones input and returns a patch of all fives."""
+        self.call_count += 1
+        return np.full(patch.shape, 5)
+
+
+class FakeStore():
+
+
+
 class TestRegionProduction:
 
-    def test_all_fives(self):
+    @pytest.fixture
+    def pipeline(self):
+        return FakePipeline()
+
+    def test_all_fives(self, pipeline):
         """Assert the finished grid is all fives everywhere, including the overlaps and the corners. 
         If the overlaps read higher then the weights are not being divided out"""
+
+        seed = 123
+        height = 8
+        width = 8
+        window_size = 4
+        step = 3
+
+        store = FakeStore(height, width)
+
+        result = produce_region(seed, height, width, window_size, step, pipeline, store)
+
+        assert np.all(result == 5)
 
     def test_full_size(self):
         """Assert the finished grid is the region's full resolution size"""
