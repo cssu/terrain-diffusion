@@ -142,10 +142,27 @@ class FakePipeline:
         return np.full(patch.shape, 5)
 
 
-class FakeStore():
+class FakeStore:
+    #used ai help for this because store is not part of my ticket
+    def __init__(self, height, width):
+        self.sum_grid = np.zeros((height, width))
+        self.weight_grid = np.zeros((height, width))
 
+    def add(self, patch, row, column, weights):
+        self.sum_grid[
+            row:row + patch.shape[0],
+            column:column + patch.shape[1]
+        ] += patch * weights
 
+        self.weight_grid[
+            row:row + patch.shape[0],
+            column:column + patch.shape[1]
+        ] += weights
 
+    def finish(self):
+        return self.sum_grid / self.weight_grid
+
+    
 class TestRegionProduction:
 
     @pytest.fixture
@@ -163,16 +180,56 @@ class TestRegionProduction:
         step = 3
 
         store = FakeStore(height, width)
-
         result = produce_region(seed, height, width, window_size, step, pipeline, store)
+        assert np.allclose(result, 5)  #All close because was getting float error as some are 4.9999 due to the store 
 
-        assert np.all(result == 5)
 
-    def test_full_size(self):
+    def test_full_size(self, pipeline):
         """Assert the finished grid is the region's full resolution size"""
 
-    def test_once_per_window(self):
+        seed = 123
+        height = 8
+        width = 8
+        window_size = 4
+        step = 3
+
+        store = FakeStore(height, width)
+        result = produce_region(seed, height, width, window_size, step, pipeline, store)
+        assert result.shape == (height, width)
+
+
+    def test_once_per_window(self, pipeline):
         """Assert the fake pipeline was called once per window position and no more"""
+        
+        seed = 123
+        height = 8
+        width = 8
+        window_size = 4
+        step = 3
+
+        positions = window_positions(height, width, window_size, step)
+
+        store = FakeStore(height, width)
+        produce_region(seed, height, width, window_size, step, pipeline, store)
+
+        assert pipeline.call_count == len(positions)
+
 
     def test_same_seed_grid(self):
         """Assert the same seed and region run twice give identical grids"""
+        height = 8
+        width = 8
+        window_size = 4
+        step = 3
+
+        store1 = FakeStore(height, width)
+        store2 = FakeStore(height, width)
+
+        #because using same pipeline might affect results?
+        pipeline1 = FakePipeline()
+        pipeline2 = FakePipeline()
+
+        result1 = produce_region(123, height, width, window_size, step, pipeline1, store1)
+        result2 = produce_region(123, height, width, window_size, step, pipeline2, store2)
+
+        assert np.array_equal(result1, result2)

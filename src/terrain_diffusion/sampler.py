@@ -128,7 +128,7 @@ def produce_region(seed: int, height: int, width: int, window_size: int, step: i
             column:column + window_size
         ]
 
-        processed_patch = pipeline(window) #based on unmerged commit i believe this will be pipeline.generate(window)
+        processed_patch = pipeline.generate(window) #based on unmerged commit i believe this will be pipeline.generate(window)
 
         store.add(processed_patch, row, column, weights)
 
