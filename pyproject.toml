@@ -9,6 +9,7 @@ requires-python = ">=3.14"
 # TODO: add entries here as the project starts needing them,
 # then run `uv sync` to install and update uv.lock
 dependencies = [
+    "coveralls>=4.1.0",
     "numpy>=2.5.2",
 ]
 
@@ -70,4 +71,14 @@ addopts = "--strict-markers --strict-config"
 markers = [
     "slow: use for slow tests, runs on /test slow comment",
     "gpu: use for GPU tests, runs on  /test gpu comment",
+]
+
+
+# ---------------------------------------------------------------------------
+# coverage: ignore specific files
+# ---------------------------------------------------------------------------
+
+[tool.coverage.run]
+omit = [
+    # add omissions here
 ]

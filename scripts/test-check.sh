@@ -68,7 +68,7 @@ fi
 echo "==> Running the '$group' tests (pytest)"
 
 status=0
-uv run pytest "${marker_args[@]+"${marker_args[@]}"}" "${report_args[@]+"${report_args[@]}"}" "$@" || status=$?
+uv run coverage run -m pytest "${marker_args[@]+"${marker_args[@]}"}" "${report_args[@]+"${report_args[@]}"}" "$@" || status=$?
 
 if [[ $status -eq 5 ]]; then
   if [[ "$group" == "python" ]]; then
