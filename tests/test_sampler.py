@@ -5,7 +5,12 @@ Testing for window blending sampler.
 import numpy as np
 import pytest
 
-from terrain_diffusion.sampler import produce_region, generate_noise_from_seed, weight_grid, window_positions
+from terrain_diffusion.sampler import (
+    generate_noise_from_seed,
+    produce_region,
+    weight_grid,
+    window_positions,
+)
 
 
 class TestWindowPositions:
@@ -150,9 +155,7 @@ class TestRegionProduction:
         window_size = 4
         step = 3
 
-        weighted_sum, weight_sum = produce_region(
-            seed, height, width, window_size, step, pipeline
-            )
+        weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
         result = weighted_sum / weight_sum  # doing job of store
         assert np.allclose(
             result, 5
@@ -167,9 +170,7 @@ class TestRegionProduction:
         window_size = 4
         step = 3
 
-        weighted_sum, weight_sum = produce_region(
-            seed, height, width, window_size, step, pipeline
-            )
+        weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
         result = weighted_sum / weight_sum  # doing job of store
 
         assert result.shape == (height, width)
@@ -203,10 +204,10 @@ class TestRegionProduction:
 
         weighted_sum1, weight_sum1 = produce_region(
             seed, height, width, window_size, step, pipeline1
-            )
+        )
         weighted_sum2, weight_sum2 = produce_region(
             seed, height, width, window_size, step, pipeline2
-            )
+        )
         result1 = weighted_sum1 / weight_sum1
         result2 = weighted_sum2 / weight_sum2
 
