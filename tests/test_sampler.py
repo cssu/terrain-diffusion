@@ -129,21 +129,14 @@ class TestSeed:
         assert noise.shape == (height, width)
 
 
-class FakePipeline:
-    def __init__(self):
-        """For test_once_per_window"""
-        self.call_count = 0
-
-    def generate(self, patch):
-        """Igrones input and returns a patch of all fives."""
-        self.call_count += 1
-        return np.full(patch.shape, 5)
-
-
 class TestRegionProduction:
     @pytest.fixture
-    def pipeline(self):
-        return FakePipeline()
+    def pipeline(self, mocker):
+        pipeline = mocker.Mock()  # make it a Mock object, this way can count calls.
+        pipeline.generate.side_effect = lambda patch: np.full(
+            patch.shape, 5
+        )  # added side_effect to keep it a Mock object
+        return pipeline
 
     def test_all_fives(self, pipeline):
         """Assert the finished grid is all fives everywhere, including the overlaps and the corners.
@@ -153,7 +146,7 @@ class TestRegionProduction:
         height = 8
         width = 8
         window_size = 4
-        step = 3
+        step = 2
 
         weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
         result = weighted_sum / weight_sum  # doing job of store
@@ -168,7 +161,7 @@ class TestRegionProduction:
         height = 8
         width = 8
         window_size = 4
-        step = 3
+        step = 2
 
         weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
         result = weighted_sum / weight_sum  # doing job of store
@@ -182,31 +175,27 @@ class TestRegionProduction:
         height = 8
         width = 8
         window_size = 4
-        step = 3
+        step = 2
 
         positions = window_positions(height, width, window_size, step)
 
         produce_region(seed, height, width, window_size, step, pipeline)
 
-        assert pipeline.call_count == len(positions)
+        assert pipeline.generate.call_count == len(positions)
 
-    def test_same_seed_grid(self):
+    def test_same_seed_grid(self, pipeline):
         """Assert the same seed and region run twice give identical grids"""
         seed = 123
         height = 8
         width = 8
         window_size = 4
-        step = 3
-
-        # because using same pipeline might affect results
-        pipeline1 = FakePipeline()
-        pipeline2 = FakePipeline()
+        step = 2
 
         weighted_sum1, weight_sum1 = produce_region(
-            seed, height, width, window_size, step, pipeline1
+            seed, height, width, window_size, step, pipeline
         )
         weighted_sum2, weight_sum2 = produce_region(
-            seed, height, width, window_size, step, pipeline2
+            seed, height, width, window_size, step, pipeline
         )
         result1 = weighted_sum1 / weight_sum1
         result2 = weighted_sum2 / weight_sum2

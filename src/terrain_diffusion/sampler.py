@@ -102,7 +102,7 @@ def produce_region(
     window_size: int,
     step: int,
     pipeline,
-) -> np.ndarray:
+) -> tuple[np.ndarray]:
     """Make noise canvas of given dimensions. Make noise and weight grid.
     For each window position, cut the window out of the noise canvas, send it to pipeline, add the processed output and its weight to Terrain Store (at that position).
     Read the finished height grid from store and return it."""
