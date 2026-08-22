@@ -72,6 +72,8 @@ def weight_grid(edge_len: int) -> np.ndarray:
     # numpy array: [[row 1 contents], [row 2 contents]]
     # indexing in 2D Array: array[row, column]
 
+    assert edge_len > 1
+
     # create 1D arrays
     positions = np.arange(edge_len)
 
@@ -82,7 +84,7 @@ def weight_grid(edge_len: int) -> np.ndarray:
     distance = np.abs(positions - center)
 
     # weight: apply formula. multiplied 0.9 so values stay above 0
-    weight = 1 - 0.9 * distance / (edge_len / 2)
+    weight = 1 - 0.9 * distance / center
     # combine
     weights = np.outer(weight, weight)
 
