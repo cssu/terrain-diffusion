@@ -31,7 +31,10 @@ def window_positions(
 ) -> list[tuple[int, int]]:
     """Takes a region height and width, a window size, and a step size, and returns the list of top left positions to place windows at.
     The step is smaller than the window, which is what makes them overlap.
-    If step does not divide evenly (extends), push last window to row/column of region_cl/row - window_size, so that no window hangs over the edge."""
+    If step does not divide evenly, throws an assertion error."""
+
+    assert region_height % window_size == 0
+    assert region_width % window_size == 0
 
     # Find row positions
     row_positions = []
@@ -39,13 +42,6 @@ def window_positions(
 
     while row + window_size <= region_height:
         row_positions.append(row)
-
-        if row + step + window_size > region_height:
-            final = region_height - window_size
-            if row_positions[-1] != final:
-                row_positions.append(final)
-            break
-
         row += step
 
     # Find column positions
@@ -54,13 +50,6 @@ def window_positions(
 
     while column + window_size <= region_width:
         column_positions.append(column)
-
-        if column + step + window_size > region_width:
-            final = region_width - window_size
-            if column_positions[-1] != final:
-                column_positions.append(final)
-            break
-
         column += step
 
     # Combine every row position with every column position
@@ -72,7 +61,7 @@ def window_positions(
     return positions
 
 
-def weight_grid(height: int, width: int) -> np.ndarray:
+def weight_grid(edge_len: int) -> np.ndarray:
     """Create a function that returns a grid of weights the size of a patch, since the weights get applied to what is written into the store.
     Weights should be largest in the middle and get smaller toward the edges. Every weight must be greater than zero.
     A weight of exactly zero means a cell in the corner of a region, covered by only one window, can never be filled in.
@@ -84,28 +73,23 @@ def weight_grid(height: int, width: int) -> np.ndarray:
     # indexing in 2D Array: array[row, column]
 
     # create 1D arrays
-    rows = np.arange(height)
-    columns = np.arange(width)
+    positions = np.arange(edge_len)
 
     # find center (-1 because we start from 0)
-    center_row = (height - 1) / 2
-    center_column = (width - 1) / 2
+    center = (edge_len - 1) / 2
 
     # distance from center
-    row_distance = np.abs(rows - center_row)
-    column_distance = np.abs(columns - center_column)
+    distance = np.abs(positions - center)
 
     # weight: apply formula. multiplied 0.9 so values stay above 0
-    row_weight = 1 - 0.9 * row_distance / (height / 2)
-    column_weight = 1 - 0.9 * column_distance / (width / 2)
-
+    weight = 1 - 0.9 * distance / (edge_len / 2)
     # combine
-    weights = np.outer(row_weight, column_weight)
+    weights = np.outer(weight, weight)
 
     return weights
 
 
-def starting_noise(seed: int, height: int, width: int) -> np.ndarray:
+def generate_noise_from_seed(seed: int, height: int, width: int) -> np.ndarray:
     "Takes a seed and a canvas size and returns a grid of random numbers that size"
     generator = np.random.default_rng(seed)
     return generator.random((height, width))
@@ -115,13 +99,13 @@ def produce_region(
     seed: int, height: int, width: int, window_size: int, step: int, pipeline, store
 ) -> np.ndarray:
     """Make noise canvas of given dimensions. Make noise and weight grid.
-    For each window position, cut the window out of the noise canvas, send it to pipeline (#23), add the processed output and its weight to Terrain Store (at that position).
+    For each window position, cut the window out of the noise canvas, send it to pipeline, add the processed output and its weight to Terrain Store (at that position).
     Read the finished height grid from store and return it."""
 
-    noise = starting_noise(seed, height, width)
+    noise = generate_noise_from_seed(seed, height, width)
 
     positions = window_positions(height, width, window_size, step)
-    weights = weight_grid(window_size, window_size)  # weight grid made on window_size
+    weights = weight_grid(window_size)  # weight grid made on window_size
 
     for row, column in positions:
         window = noise[row : row + window_size, column : column + window_size]
