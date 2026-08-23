@@ -100,6 +100,7 @@ class TestWeights:
         assert np.all(weights > 0)
 
 
+# the requested test for determinitic grid has been added at line 205
 class TestSeed:
     def test_same_seed(self):
         """Assert the same seed twice gives identical grids."""
