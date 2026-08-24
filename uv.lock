@@ -420,12 +420,12 @@ source = { editable = "." }
 dependencies = [
     { name = "coveralls" },
     { name = "numpy" },
-    { name = "pytest-mock" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pytest" },
+    { name = "pytest-mock" },
     { name = "ruff" },
 ]
 
@@ -433,12 +433,12 @@ dev = [
 requires-dist = [
     { name = "coveralls", specifier = ">=4.1.0" },
     { name = "numpy", specifier = ">=2.5.2" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "pytest", specifier = ">=8.3" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
     { name = "ruff", specifier = ">=0.9" },
 ]
 

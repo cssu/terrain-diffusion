@@ -31,32 +31,30 @@ def window_positions(
 ) -> list[tuple[int, int]]:
     """Takes a region height and width, a window size, and a step size, and returns the list of top left positions to place windows at.
     The step is smaller than the window, which is what makes them overlap.
-    If step does not divide evenly, throws an assertion error."""
+    If window_size does not divide evenly, throws an assertion error."""
 
     assert region_height % window_size == 0
     assert region_width % window_size == 0
 
-    # Find row positions
-    row_positions = []
-    row = 0
+    # Row, Column Position
+    rows = np.arange(0, region_height - window_size + 1, step)
+    columns = np.arange(0, region_width - window_size + 1, step)
 
-    while row + window_size <= region_height:
-        row_positions.append(row)
-        row += step
+    # Incase step does not divide valid regions evenly
+    final_row = region_height - window_size
+    final_column = region_width - window_size
 
-    # Find column positions
-    column_positions = []
-    column = 0
+    if rows[-1] != final_row:
+        rows = np.append(rows, final_row)
+    if columns[-1] != final_column:
+        columns = np.append(columns, final_column)
 
-    while column + window_size <= region_width:
-        column_positions.append(column)
-        column += step
-
-    # Combine every row position with every column position
-    positions = []
-    for row in row_positions:
-        for column in column_positions:
-            positions.append((row, column))
+    row_grid, column_grid = np.meshgrid(
+        rows, columns, indexing="ij"
+    )  # gives 2-D matrix array: [0, 2, 4] -> [[0, 0, 0], [2, 2, 2]...]; (every row/column repeated across column/row)
+    positions = np.stack(
+        (row_grid.ravel(), column_grid.ravel()), axis=1
+    )  # Ravel flattens array; Stacks in (Row, Column)
 
     return positions
 
