@@ -33,21 +33,13 @@ def window_positions(
     The step is smaller than the window, which is what makes them overlap.
     If window_size does not divide evenly, throws an assertion error."""
 
-    assert region_height % window_size == 0
-    assert region_width % window_size == 0
+    assert (region_height - window_size) % step == 0
+    assert (region_width - window_size) % step == 0
+    assert step <= window_size
 
     # Row, Column Position
     rows = np.arange(0, region_height - window_size + 1, step)
     columns = np.arange(0, region_width - window_size + 1, step)
-
-    # Incase step does not divide valid regions evenly
-    final_row = region_height - window_size
-    final_column = region_width - window_size
-
-    if rows[-1] != final_row:
-        rows = np.append(rows, final_row)
-    if columns[-1] != final_column:
-        columns = np.append(columns, final_column)
 
     row_grid, column_grid = np.meshgrid(
         rows, columns, indexing="ij"

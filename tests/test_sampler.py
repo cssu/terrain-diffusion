@@ -19,7 +19,7 @@ class TestWindowPositions:
         height = 4
         width = 4
         window = 2
-        step = 3
+        step = 2
         positions = window_positions(height, width, window, step)
         assert all(
             any(
