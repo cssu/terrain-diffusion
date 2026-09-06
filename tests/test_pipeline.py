@@ -25,6 +25,6 @@ class TestModelPipeline:
     def test_generate_deterministic(self, initial_pipeline, initial_patch):
         output_1 = initial_pipeline.generate(initial_patch)
         output_2 = initial_pipeline.generate(initial_patch)
-        assert output_1 == output_2, (
+        assert np.array_equal(output_1, output_2)(
             "outputs are not the same"
         )  # TODO: might have to change this depending on the output of the elevation encoder
