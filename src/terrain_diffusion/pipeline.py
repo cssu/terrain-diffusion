@@ -22,8 +22,8 @@ Neighbours and communication
 import numpy as np
 import itertools
 
-from terrain_diffusion.inference import load_model
-from terrain_diffusion import encoding
+from terrain_diffusion.inference import load_models
+from terrain_diffusion.encoding import ElevationEncoder
 
 class ModelPipeline:
 
@@ -46,11 +46,12 @@ class ModelPipeline:
 
 
   def clean_patch(patch: np.ndarray) -> np.ndarray:
-    core, decoder = load_model("core"), load_model("decoder")
+    core, decoder = load_models("core", "decoder")
 
     core_output = core.predict(patch)
     decoder_output = decoder.predict(core_output.latent_map)
 
     #TODO: update functions and output once elevation encoding is complete
-    some_output = encoding.some_function(core_output.low_res_grid, decoder_output.full_res_grid)
-    return some_output
+    enc = ElevationEncoder()
+    elevations = enc.encode(core_output.low_res_grid, decoder_output.full_res_grid)
+    return elevations
