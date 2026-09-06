@@ -4,8 +4,10 @@ Tests ModelPipeline generation functions
 
 import numpy as np
 import pytest
-from terrain_diffusion.pipeline import *
+
 from terrain_diffusion.inference import PATCH_SIZE
+from terrain_diffusion.pipeline import ModelPipeline
+
 
 class TestModelPipeline:
     @pytest.fixture
@@ -23,4 +25,6 @@ class TestModelPipeline:
     def test_generate_deterministic(self, initial_pipeline, initial_patch):
         output_1 = initial_pipeline.generate(initial_patch)
         output_2 = initial_pipeline.generate(initial_patch)
-        assert output_1 == output_2, "outputs are not the same" #TODO: might have to change this depending on the output of the elevation encoder
+        assert output_1 == output_2, (
+            "outputs are not the same"
+        )  # TODO: might have to change this depending on the output of the elevation encoder

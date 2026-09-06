@@ -16,7 +16,7 @@ from terrain_diffusion.inference import (
     MockDecoderModelInput,
     MockDecoderModelOutput,
     load_model,
-    load_models
+    load_models,
 )
 
 
@@ -51,18 +51,28 @@ class TestTerrainModel:
         assert isinstance(load_model("decoder"), MockDecoderModel), (
             "expected decoder model, got core model instead"
         )
-        assert isinstance(load_model("core"), MockCoreModel), "expected core model, got decoder model instead"
+        assert isinstance(load_model("core"), MockCoreModel), (
+            "expected core model, got decoder model instead"
+        )
 
     def test_load_models(self):
         models = list(load_models("core", "decoder"))
         assert len(models) == 2, "invalid number of models returned"
 
-        assert isinstance(models[0], MockCoreModel), "expected core model, got decoder model instead"
-        assert isinstance(models[1], MockDecoderModel), "expected decoder model, got core model instead"
+        assert isinstance(models[0], MockCoreModel), (
+            "expected core model, got decoder model instead"
+        )
+        assert isinstance(models[1], MockDecoderModel), (
+            "expected decoder model, got core model instead"
+        )
 
         models_2 = list(load_models("decoder", "core"))
-        assert isinstance(models_2[0], MockDecoderModel), "expected decoder model, got core model instead"
-        assert isinstance(models_2[1], MockCoreModel), "expected core model, got decoder model instead"
+        assert isinstance(models_2[0], MockDecoderModel), (
+            "expected decoder model, got core model instead"
+        )
+        assert isinstance(models_2[1], MockCoreModel), (
+            "expected core model, got decoder model instead"
+        )
 
     def test_predict_core(self, initial_core):
         input = MockCoreModelInput(np.ones(PATCH_SIZE))
