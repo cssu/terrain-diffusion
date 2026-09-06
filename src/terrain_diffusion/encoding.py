@@ -19,14 +19,3 @@ Neighbours and communication
 - The transforms are reversible, so applying the forward direction and then the reverse returns
   the original within a small tolerance.
 """
-
-# TODO: i only defined the skeleton so it can be called from the model pipeline
-import numpy as np
-
-
-class ElevationEncoder:
-    def __init__(self):
-        pass
-
-    def encode(low_res: np.ndarray, full_res: np.ndarray) -> np.ndarray:
-        pass

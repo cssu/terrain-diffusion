@@ -24,7 +24,7 @@ import itertools
 
 import numpy as np
 
-from terrain_diffusion.encoding import ElevationEncoder
+from terrain_diffusion.encoding import Entrypoint
 from terrain_diffusion.inference import load_models
 
 
@@ -52,6 +52,6 @@ class ModelPipeline:
         decoder_output = decoder.predict(core_output.latent_map)
 
         # TODO: update functions and output once elevation encoding is complete
-        enc = ElevationEncoder()
-        elevations = enc.encode(core_output.low_res_grid, decoder_output.full_res_grid)
+        encoder = Entrypoint()
+        elevations = encoder.combine_lowres_and_detail(core_output.low_res_grid, decoder_output.full_res_grid)
         return elevations
