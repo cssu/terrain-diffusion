@@ -53,5 +53,7 @@ class ModelPipeline:
 
         # TODO: update functions and output once elevation encoding is complete
         encoder = Entrypoint()
-        elevations = encoder.combine_lowres_and_detail(core_output.low_res_grid, decoder_output.full_res_grid)
+        elevations = encoder.combine_lowres_and_detail(
+            core_output.low_res_grid, decoder_output.full_res_grid
+        )
         return elevations
