@@ -23,8 +23,8 @@ Neighbours and communication
 from __future__ import annotations
 
 import numpy as np
-import torch
 import torchvision.transforms.functional as TF
+from torch import Tensor, cat, from_numpy
 
 DIMENSIONS_OF_GRID = 2  # Dimension of the grid that contains the map; the map is, naturally, 3D.
 
@@ -36,12 +36,14 @@ class Entrypoint:
      - len(low_res.shape) == DIMENSIONS_OF_GRID
      - len(residual.shape) == DIMENSIONS_OF_GRID
     """
+
     low_res: np.ndarray
     residual: np.ndarray
 
     def __init__(self, low_res: np.ndarray, residual: np.ndarray):
-        assert len(low_res.shape) == DIMENSIONS_OF_GRID and \
-               len(residual.shape) == DIMENSIONS_OF_GRID
+        assert (
+            len(low_res.shape) == DIMENSIONS_OF_GRID and len(residual.shape) == DIMENSIONS_OF_GRID
+        )
         self.low_res = low_res
         self.residual = residual
 
@@ -68,7 +70,7 @@ def pad_linear_extrapolation(x):
         top_pad = x[..., 0:1, :]
         bot_pad = x[..., -1:, :]
 
-    x = torch.cat([top_pad, x, bot_pad], dim=-2)
+    x = cat([top_pad, x, bot_pad], dim=-2)
 
     # Pad W
     if w > 1:
@@ -83,14 +85,13 @@ def pad_linear_extrapolation(x):
         left_pad = x[..., :, 0:1]
         right_pad = x[..., :, -1:]
 
-    x = torch.cat([left_pad, x, right_pad], dim=-1)
+    x = cat([left_pad, x, right_pad], dim=-1)
     return x
 
 
-def resize_extrapolated(x,
-                        size: [tuple | list],
-                        interpolation=TF.InterpolationMode.BILINEAR,
-                        **kwargs):
+def resize_extrapolated(
+    x, size: [tuple | list], interpolation=TF.InterpolationMode.BILINEAR, **kwargs
+):
     """
 
     :param x: terrain heightmap
@@ -117,14 +118,16 @@ def resize_extrapolated(x,
     pad_h = int(round(scale_h))
     pad_w = int(round(scale_w))
 
-    return out[..., pad_h:pad_h + target_h, pad_w:pad_w + target_w]
+    return out[..., pad_h : pad_h + target_h, pad_w : pad_w + target_w]
 
 
-def laplacian_encode(x: np.ndarray | torch.Tensor,
-                     downsample_size,
-                     sigma,
-                     interp_mode=TF.InterpolationMode.BILINEAR,
-                     extrapolate=False):
+def laplacian_encode(
+    x: np.ndarray | Tensor,
+    downsample_size,
+    sigma,
+    interp_mode=TF.InterpolationMode.BILINEAR,
+    extrapolate=False,
+):
     """
     :param x: terrain heightmap
     :param downsample_size: the target size we want to downsize to
@@ -137,7 +140,7 @@ def laplacian_encode(x: np.ndarray | torch.Tensor,
     """
     is_numpy = isinstance(x, np.ndarray)
     if is_numpy:
-        x = torch.from_numpy(x)
+        x = from_numpy(x)
 
     # Unsqueeze to 4 dimensions if needed
     squeeze_count = 0
@@ -146,7 +149,13 @@ def laplacian_encode(x: np.ndarray | torch.Tensor,
         squeeze_count += 1
 
     lowres = TF.resize(x, downsample_size, interpolation=interp_mode)
-    lowres = TF.gaussian_blur(lowres, kernel_size=[(sigma * 2) // 2 * 2 + 1, ], sigma=sigma)
+    lowres = TF.gaussian_blur(
+        lowres,
+        kernel_size=[
+            (sigma * 2) // 2 * 2 + 1,
+        ],
+        sigma=sigma,
+    )
     if not extrapolate:
         lowres_up = TF.resize(lowres, list(x.shape[-2:]), interpolation=interp_mode)
     else:
@@ -165,11 +174,13 @@ def laplacian_encode(x: np.ndarray | torch.Tensor,
     return residual, lowres
 
 
-def laplacian_decode(residual: np.ndarray,
-                     lowres: np.ndarray,
-                     interp_mode=TF.InterpolationMode.BILINEAR,
-                     extrapolate=False,
-                     pre_padded=False) -> tuple[np.ndarray, np.ndarray]:
+def laplacian_decode(
+    residual: np.ndarray,
+    lowres: np.ndarray,
+    interp_mode=TF.InterpolationMode.BILINEAR,
+    extrapolate=False,
+    pre_padded=False,
+) -> tuple[np.ndarray, np.ndarray]:
     """
 
     :param residual: residual of the heightmap
@@ -179,13 +190,13 @@ def laplacian_decode(residual: np.ndarray,
     :param pre_padded: if the heightmap is padded. I'd prefer if you don't use this option.
     :return: A 2-tuple containing the residual and the upscaled low-res heightmap
     """
-    assert (isinstance(residual, np.ndarray) == isinstance(lowres, np.ndarray))
+    assert isinstance(residual, np.ndarray) == isinstance(lowres, np.ndarray)
     is_numpy = isinstance(residual, np.ndarray)
 
     # Convert to torch first if numpy (Should be the case in our case)
     if is_numpy:
-        residual = torch.from_numpy(residual)
-        lowres = torch.from_numpy(lowres)
+        residual = from_numpy(residual)
+        lowres = from_numpy(lowres)
 
     # Unsqueeze to 4 dimensions if needed
     squeeze_count = 0
@@ -221,10 +232,7 @@ def laplacian_decode(residual: np.ndarray,
     return residual, lowres_up
 
 
-def laplacian_denoise(residual,
-                      lowres,
-                      sigma,
-                      interp_mode=TF.InterpolationMode.BILINEAR) -> tuple:
+def laplacian_denoise(residual, lowres, sigma, interp_mode=TF.InterpolationMode.BILINEAR) -> tuple:
     """
     :param residual: residual of the heightmap
     :param lowres: low-res version of heightmap
@@ -232,13 +240,16 @@ def laplacian_denoise(residual,
     :param interp_mode: the desired interpolation mode. Bilinear is set as default
     :return: the residual and the new lowres, decoded and re-encoded.
     """
-    decoded_residual, decoded_lowres_up = laplacian_decode(residual, lowres, interp_mode, extrapolate=True)
-    _, new_lowres = laplacian_encode(decoded_residual + decoded_lowres_up, lowres.shape[-1], sigma, interp_mode)
+    decoded_residual, decoded_lowres_up = laplacian_decode(
+        residual, lowres, interp_mode, extrapolate=True
+    )
+    _, new_lowres = laplacian_encode(
+        decoded_residual + decoded_lowres_up, lowres.shape[-1], sigma, interp_mode
+    )
     return residual, new_lowres
 
 
-def re_extraction(x: np.ndarray | torch.Tensor,
-                  downsample_size):
+def re_extraction(x: np.ndarray | Tensor, downsample_size):
     """
     This re-extraction is not perfect, but according to the paper should be robust, precise, and accurate
     :param x: the original high-definition heightmap
@@ -250,9 +261,9 @@ def re_extraction(x: np.ndarray | torch.Tensor,
 
 
 def scale_heights(
-        height_grid: np.ndarray,
-        src_range: tuple[float, float],
-        tgt_range: tuple[float, float],
+    height_grid: np.ndarray,
+    src_range: tuple[float, float],
+    tgt_range: tuple[float, float],
 ) -> np.ndarray:
     """
     Preconditions:
