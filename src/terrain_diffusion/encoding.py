@@ -126,7 +126,6 @@ def laplacian_encode(x: np.ndarray | torch.Tensor,
                      interp_mode=TF.InterpolationMode.BILINEAR,
                      extrapolate=False):
     """
-
     :param x: terrain heightmap
     :param downsample_size: the target size we want to downsize to
     :param sigma: sigma value used for gaussian blurring
@@ -134,7 +133,7 @@ def laplacian_encode(x: np.ndarray | torch.Tensor,
     the original paper
     :param extrapolate: if extrapolation is desired before encoding. Personally, I don't like merging these two into
     a single step, but that's what the paper does.
-    :return:
+    :return: a 2-tuple with the first element being high-res residual, while the second element is the low-res "base"
     """
     is_numpy = isinstance(x, np.ndarray)
     if is_numpy:
@@ -242,9 +241,9 @@ def re_extraction(x: np.ndarray | torch.Tensor,
                   downsample_size):
     """
     This re-extraction is not perfect, but according to the paper should be robust, precise, and accurate
-    :param x:
-    :param downsample_size:
-    :return:
+    :param x: the original high-definition heightmap
+    :param downsample_size: the size that we want to downsample to
+    :return: the downsampled heightmap
     """
     _, decoded_lowres_up = laplacian_decode(laplacian_encode(x, downsample_size))
     return x - decoded_lowres_up, decoded_lowres_up
@@ -274,36 +273,3 @@ def scale_heights(
     assert tgt_min <= tgt_max, "Invalid destination range"
 
     return tgt_min + (height_grid - src_min) * (tgt_max - tgt_min) / (src_max - src_min)
-
-# def resize(self, input_grid: np.ndarray, desired_scale: ClassVar[tuple]) -> np.ndarray:
-#     """
-#     A function that takes in a small grid and scale it to a desired size and do the reverse.
-#     Utilizes linear interpolation to "fill"
-#     :param input_grid: the np grid to be resized
-#     :param desired_scale: the target size of the rescaled array
-#     :return output_grid: input grid, rescaled to the correct scale
-#     """
-#     assert len(input_grid.shape) == 2
-#     zoom_factors = np.array(desired_scale) / np.array(input_grid.shape)
-#     output_grid = zoom(input_grid, zoom_factors, order=1)
-#     return output_grid
-#
-#
-# def combine_lowres_and_detail(low_res_grid: np.ndarray, detail_grid: np.ndarray) -> np.ndarray:
-#     """
-#     Apply the scaling to the low res grid, then add the detail and scaled low res grid together
-#     :param low_res_grid: the low res grid to be rescaled to the size of the detail array
-#     :param detail_grid: the high res grid that the low-res grid will be applied on top of
-#     :return: combined_grid: the sum of these two grids
-#     """
-#     low_res_grid_expanded = resize(low_res_grid, detail_grid.shape)
-#     combined_grid = detail_grid + low_res_grid_expanded
-#     return combined_grid
-#
-#
-# def split_map(compiled_grid: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-#     """
-#     Split a full resolution map into a low res grid and detailed grid
-#     :param compiled_grid: the grid that has its low-res and high-res grids compiled
-#     :return: (low_res_grid, detail_grid): the grid, decompiled from its combination.
-#     """
