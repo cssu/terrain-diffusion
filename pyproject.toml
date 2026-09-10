@@ -9,8 +9,11 @@ requires-python = ">=3.14"
 # TODO: add entries here as the project starts needing them,
 # then run `uv sync` to install and update uv.lock
 dependencies = [
+    "accelerate>=1.14.0",
     "coveralls>=4.1.0",
+    "diffusers>=0.40.0",
     "numpy>=2.5.2",
+    "torch>=2.14.0",
 ]
 
 # The commands the project installs. `uv run terrain-diffusion` runs main() in
