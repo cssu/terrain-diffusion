@@ -12,6 +12,7 @@ dist/
 # tool caches
 .pytest_cache/
 .ruff_cache/
+.coverage
 
 node_modules/
 
@@ -21,6 +22,3 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
-
-# coverage output
-.coverage
