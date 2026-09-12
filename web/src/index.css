@@ -3,12 +3,18 @@
   color-scheme: light dark;
 }
 
+html,
+body,
+#root,
+main,
+.terrain-view {
+  height: 100%;
+}
+
 body {
   margin: 0;
 }
 
-main {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+.terrain-view canvas {
+  display: block;
 }
