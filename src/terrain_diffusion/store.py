@@ -68,8 +68,8 @@ class TerrainStore:
         seed: int,
         values: np.ndarray,
         weights: np.ndarray,
-        row: int,
-        col: int,
+        global_row: int,
+        global_col: int,
     ) -> None:
         values = np.asarray(values, dtype=float)
         weights = np.asarray(weights, dtype=float)
@@ -82,21 +82,25 @@ class TerrainStore:
             )
 
         window_height, window_width = values.shape
-        rows = range(row // self.tile_height, (row + window_height - 1) // self.tile_height + 1)
-        cols = range(col // self.tile_width, (col + window_width - 1) // self.tile_width + 1)
+        rows = range(
+            global_row // self.tile_height, (global_row + window_height - 1) // self.tile_height + 1
+        )
+        cols = range(
+            global_col // self.tile_width, (global_col + window_width - 1) // self.tile_width + 1
+        )
 
         # Parts are written one tile at a time, so a window covering more tiles than the store
         # holds would drop its own earlier parts before the rest were written.
         covered = len(rows) * len(cols)
         if covered > self.capacity:
             raise ValueError(
-                f"a {window_height}x{window_width} window at ({row}, {col}) covers {covered} "
-                f"tiles, more than the {self.capacity} this store holds"
+                f"a {window_height}x{window_width} window at ({global_row}, {global_col}) covers "
+                f"{covered} tiles, more than the {self.capacity} this store holds"
             )
 
         for y in rows:
             for x in cols:
-                self._add_window_part(seed, x, y, values, weights, row, col)
+                self._add_window_part(seed, x, y, values, weights, global_row, global_col)
 
     def _add_window_part(
         self,
@@ -105,19 +109,22 @@ class TerrainStore:
         y: int,
         values: np.ndarray,
         weights: np.ndarray,
-        row: int,
-        col: int,
+        global_row: int,
+        global_col: int,
     ) -> None:
         tile_top = y * self.tile_height
         tile_left = x * self.tile_width
         window_height, window_width = values.shape
 
-        top = max(row, tile_top)
-        left = max(col, tile_left)
-        bottom = min(row + window_height, tile_top + self.tile_height)
-        right = min(col + window_width, tile_left + self.tile_width)
+        top = max(global_row, tile_top)
+        left = max(global_col, tile_left)
+        bottom = min(global_row + window_height, tile_top + self.tile_height)
+        right = min(global_col + window_width, tile_left + self.tile_width)
 
-        inside_window = (slice(top - row, bottom - row), slice(left - col, right - col))
+        inside_window = (
+            slice(top - global_row, bottom - global_row),
+            slice(left - global_col, right - global_col),
+        )
         inside_tile = (
             slice(top - tile_top, bottom - tile_top),
             slice(left - tile_left, right - tile_left),
