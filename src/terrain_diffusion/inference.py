@@ -151,3 +151,8 @@ def load_model(model_name: str) -> TerrainModel:
     if model_name not in MODELS:
         raise ValueError("invalid model name")
     return MODELS[model_name]()
+
+
+def load_models(*model_names):
+    for model_name in model_names:
+        yield load_model(model_name)
