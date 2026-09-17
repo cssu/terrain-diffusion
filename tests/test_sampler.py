@@ -100,7 +100,6 @@ class TestWeights:
         assert np.all(weights > 0)
 
 
-# the requested test for determinitic grid has been added at line 205
 class TestSeed:
     def test_same_seed(self):
         """Assert the same seed twice gives identical grids."""
@@ -133,7 +132,7 @@ class TestSeed:
 class TestRegionProduction:
     @pytest.fixture
     def pipeline(self, mocker):
-        pipeline = mocker.Mock()  # make it a Mock object, this way can count calls.
+        pipeline = mocker.Mock()  
         pipeline.generate.side_effect = lambda patch: np.full(
             patch.shape, 5
         )  # added side_effect to keep it a Mock object
@@ -153,7 +152,7 @@ class TestRegionProduction:
         result = weighted_sum / weight_sum  # doing job of store
         assert np.allclose(
             result, 5
-        )  # All close because was getting float error as some are 4.9999 due to the store
+        )  
 
     def test_full_size(self, pipeline):
         """Assert the finished grid is the region's full resolution size"""
