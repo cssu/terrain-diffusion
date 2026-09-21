@@ -165,5 +165,6 @@ MODELS = {"decoder": DecoderModel, "core": CoreModel}
 def load_model(model_name: str) -> TerrainModel:
     if model_name not in MODELS:
         raise ValueError("invalid model name")
-    return MODELS[model_name]()
+    subfolder = "base_model" if model_name == "core" else "decoder_model"
+    return MODELS[model_name]("xandergos/terrain-diffusion-30m", subfolder_name=subfolder)
 
