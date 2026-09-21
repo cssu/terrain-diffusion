@@ -9,12 +9,14 @@ import pytest
 from terrain_diffusion.inference import (
     LATENT_MAP_SIZE,
     PATCH_SIZE,
-    MockCoreModel,
     CoreModelInput,
     CoreModelOutput,
-    MockDecoderModel,
+    CoreModel,
+    DecoderModel,
     DecoderModelInput,
     DecoderModelOutput,
+    MockCoreModel,
+    MockDecoderModel,
     load_model,
 )
 
