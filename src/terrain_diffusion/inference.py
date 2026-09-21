@@ -26,6 +26,7 @@ from typing import ClassVar
 import numpy as np
 from diffusers import DiffusionPipeline
 import torch
+from src.terrain_diffusion.models.edm_unet import EDMUnet2D
 
 
 
@@ -138,17 +139,27 @@ class MockDecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
 
 
 class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
-    model: DiffusionPipeline
+    model: EDMUnet2D
 
     def __init__(self, model_path, subfoler_name=""):
-        self.model = DiffusionPipeline.from_pretrained(model_path, subfolder=subfoler_name)
+        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfoler_name)
 
     def predict(self, input: CoreModelInput):
         output = self.model(input)
         return CoreModelOutput(output)
 
+class DecoderModel(TerrainModel[CoreModelInput, CoreModelOutput]):
+    model: EDMUnet2D
 
-MODELS = {"decoder": MockDecoderModel, "core": MockCoreModel}
+    def __init__(self, model_path, subfoler_name=""):
+        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfoler_name)
+
+    def predict(self, input: CoreModelInput):
+        output = self.model(input)
+        return DecoderModelOutput(output)
+
+
+MODELS = {"decoder": DecoderModel, "core": CoreModel}
 
 
 def load_model(model_name: str) -> TerrainModel:
@@ -156,6 +167,3 @@ def load_model(model_name: str) -> TerrainModel:
         raise ValueError("invalid model name")
     return MODELS[model_name]()
 
-if __name__ == "__main__":
-    print("starting")
-    test_model = CoreModel("xandergos/terrain-diffusion-30m", "")
