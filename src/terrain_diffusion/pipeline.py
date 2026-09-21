@@ -51,9 +51,9 @@ class ModelPipeline:
         core_output = core.predict(patch)
         decoder_output = decoder.predict(core_output.latent_map)
 
-        # TODO: update functions and output once elevation encoding is complete
-        encoder = Entrypoint()
-        elevations = encoder.combine_lowres_and_detail(
+
+        decoder = Entrypoint()
+        elevations = decoder.combine_lowres_and_detail(
             core_output.low_res_grid, decoder_output.full_res_grid
         )
         return elevations
