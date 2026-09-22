@@ -24,9 +24,8 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import numpy as np
+
 from terrain_diffusion.models.edm_unet import EDMUnet2D
-
-
 
 PATCH_SIZE = (512, 512)
 LATENT_MAP_SIZE = (3, 50, 100)  # placeholder
@@ -50,7 +49,6 @@ class TerrainModel[InputT: ModelInput, OutputT: ModelOutput](ABC):
     @abstractmethod
     def predict(self, patch: InputT) -> OutputT:
         raise NotImplementedError
-
 
 
 @dataclass
@@ -123,7 +121,6 @@ class MockCoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
         return output
 
 
-
 class MockDecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
     weights: np.ndarray
 
@@ -146,6 +143,7 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
         output = self.model(input)
         return CoreModelOutput(output)
 
+
 class DecoderModel(TerrainModel[CoreModelInput, CoreModelOutput]):
     model: EDMUnet2D
 
@@ -165,4 +163,3 @@ def load_model(model_name: str) -> TerrainModel:
         raise ValueError("invalid model name")
     subfolder = "base_model" if model_name == "core" else "decoder_model"
     return MODELS[model_name]("xandergos/terrain-diffusion-30m", subfolder_name=subfolder)
-
