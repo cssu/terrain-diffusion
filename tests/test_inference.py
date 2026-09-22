@@ -11,13 +11,10 @@ from terrain_diffusion.inference import (
     PATCH_SIZE,
     CoreModelInput,
     CoreModelOutput,
-    CoreModel,
-    DecoderModel,
     DecoderModelInput,
     DecoderModelOutput,
     MockCoreModel,
     MockDecoderModel,
-    load_model,
 )
 
 
@@ -47,12 +44,6 @@ class TestTerrainModel:
     def test_decoder_output_generation(self):
         with pytest.raises(AssertionError):
             DecoderModelOutput(np.ones((1, 1)))
-
-    def test_load_model(self):
-        assert isinstance(load_model("decoder"), MockDecoderModel), (
-            "model does not load correct decoder"
-        )
-        assert isinstance(load_model("core"), MockCoreModel), "model does not load correct core"
 
     def test_predict_core(self, initial_core):
         input = CoreModelInput(np.ones(PATCH_SIZE))

@@ -24,9 +24,7 @@ from dataclasses import dataclass
 from typing import ClassVar
 
 import numpy as np
-from diffusers import DiffusionPipeline
-import torch
-from src.terrain_diffusion.models.edm_unet import EDMUnet2D
+from terrain_diffusion.models.edm_unet import EDMUnet2D
 
 
 
@@ -141,8 +139,8 @@ class MockDecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
 class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
     model: EDMUnet2D
 
-    def __init__(self, model_path, subfoler_name=""):
-        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfoler_name)
+    def __init__(self, model_path, subfolder_name=""):
+        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfolder_name)
 
     def predict(self, input: CoreModelInput):
         output = self.model(input)
@@ -151,8 +149,8 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
 class DecoderModel(TerrainModel[CoreModelInput, CoreModelOutput]):
     model: EDMUnet2D
 
-    def __init__(self, model_path, subfoler_name=""):
-        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfoler_name)
+    def __init__(self, model_path, subfolder_name=""):
+        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfolder_name)
 
     def predict(self, input: CoreModelInput):
         output = self.model(input)
