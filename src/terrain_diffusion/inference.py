@@ -25,6 +25,8 @@ from typing import ClassVar
 
 import numpy as np
 
+from terrain_diffusion.models.edm_unet import EDMUnet2D
+
 PATCH_SIZE = (512, 512)
 LATENT_MAP_SIZE = (3, 50, 100)  # placeholder
 
@@ -48,28 +50,21 @@ class TerrainModel[InputT: ModelInput, OutputT: ModelOutput](ABC):
     def predict(self, patch: InputT) -> OutputT:
         raise NotImplementedError
 
-    @abstractmethod
-    def load_weights(self, model_path: str):
-        """
-        Load a model stored in model_path
-        """
-        raise NotImplementedError
-
 
 @dataclass
-class MockCoreModelInput(ModelInput):
+class CoreModelInput(ModelInput):
     patch: np.ndarray
     patch_shape: ClassVar[tuple] = PATCH_SIZE
 
     def __post_init__(self):
         assert self.patch.shape == self.patch_shape, "invalid input patch shape"
 
-    def __eq__(self, other: MockCoreModelInput):
+    def __eq__(self, other: CoreModelInput):
         return np.array_equal(self.patch, other.patch)
 
 
 @dataclass
-class MockCoreModelOutput(ModelOutput):
+class CoreModelOutput(ModelOutput):
     low_res_grid: np.ndarray
     latent_map: np.ndarray
     low_res_grid_shape: ClassVar[tuple] = (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8)
@@ -81,26 +76,26 @@ class MockCoreModelOutput(ModelOutput):
             "invalid low resolution grid shape"
         )
 
-    def __eq__(self, other: MockCoreModelInput):
+    def __eq__(self, other: CoreModelInput):
         return np.array_equal(self.low_res_grid, other.low_res_grid) and np.array_equal(
             self.latent_map, other.latent_map
         )
 
 
 @dataclass
-class MockDecoderModelInput(ModelInput):
+class DecoderModelInput(ModelInput):
     latent_map: np.ndarray
     latent_map_shape: ClassVar[tuple] = LATENT_MAP_SIZE
 
     def __post_init__(self):
         assert self.latent_map.shape == self.latent_map_shape, "invalid latent map size"
 
-    def __eq__(self, other: MockDecoderModelInput):
+    def __eq__(self, other: DecoderModelInput):
         return np.array_equal(self.latent_map, other.latent_map)
 
 
 @dataclass
-class MockDecoderModelOutput(ModelOutput):
+class DecoderModelOutput(ModelOutput):
     full_res_grid: np.ndarray
     full_res_grid_shape: ClassVar[tuple] = PATCH_SIZE
 
@@ -109,45 +104,62 @@ class MockDecoderModelOutput(ModelOutput):
             "invalid full resolution grid size"
         )
 
-    def __eq__(self, other: MockCoreModelOutput):
+    def __eq__(self, other: CoreModelOutput):
         return np.array_equal(self.full_res_grid, other.full_res_grid)
 
 
-class MockCoreModel(TerrainModel[MockCoreModelInput, MockCoreModelOutput]):
+class MockCoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
     weights: np.ndarray
 
-    def predict(self, input: MockCoreModelInput) -> MockCoreModelOutput:
+    def predict(self, input: CoreModelInput) -> CoreModelOutput:
 
         double = input.patch * 2
         low_res_grid = np.resize(double, (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8))
         latent_map = np.resize(double, LATENT_MAP_SIZE)
-        output = MockCoreModelOutput(low_res_grid, latent_map)
+        output = CoreModelOutput(low_res_grid, latent_map)
 
         return output
 
-    def load_weights(self, model_path: str):
-        self.weights = np.ones((3, 4, 5))
 
-
-class MockDecoderModel(TerrainModel[MockDecoderModelInput, MockDecoderModelOutput]):
+class MockDecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
     weights: np.ndarray
 
-    def predict(self, input: MockDecoderModelInput) -> MockDecoderModelOutput:
+    def predict(self, input: DecoderModelInput) -> DecoderModelOutput:
 
         double = input.latent_map * 2
         full_res_grid = np.resize(double, PATCH_SIZE)
-        output = MockDecoderModelOutput(full_res_grid)
+        output = DecoderModelOutput(full_res_grid)
 
         return output
 
-    def load_weights(self, model_path: str):
-        self.weights = np.ones((3, 4, 5))
+
+class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
+    model: EDMUnet2D
+
+    def __init__(self, model_path, subfolder_name=""):
+        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfolder_name)
+
+    def predict(self, input: CoreModelInput):
+        output = self.model(input)
+        return CoreModelOutput(output)
 
 
-MODELS = {"decoder": MockDecoderModel, "core": MockCoreModel}
+class DecoderModel(TerrainModel[CoreModelInput, CoreModelOutput]):
+    model: EDMUnet2D
+
+    def __init__(self, model_path, subfolder_name=""):
+        self.model = EDMUnet2D.from_pretrained(model_path, subfolder=subfolder_name)
+
+    def predict(self, input: CoreModelInput):
+        output = self.model(input)
+        return DecoderModelOutput(output)
+
+
+MODELS = {"decoder": DecoderModel, "core": CoreModel}
 
 
 def load_model(model_name: str) -> TerrainModel:
     if model_name not in MODELS:
         raise ValueError("invalid model name")
-    return MODELS[model_name]()
+    subfolder = "base_model" if model_name == "core" else "decoder_model"
+    return MODELS[model_name]("xandergos/terrain-diffusion-30m", subfolder_name=subfolder)
