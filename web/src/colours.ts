@@ -32,12 +32,13 @@ export function heightColour(height: number): Colour {
   return STOPS[STOPS.length - 1].colour
 }
 
-export function gridColours(heights: ArrayLike<number>): Uint8Array {
-  const colours = new Uint8Array(heights.length * 3)
+export function gridPixels(heights: ArrayLike<number>): Uint8Array {
+  const pixels = new Uint8Array(heights.length * 4)
 
   for (let i = 0; i < heights.length; i++) {
-    colours.set(heightColour(heights[i]), i * 3)
+    pixels.set(heightColour(heights[i]), i * 4)
+    pixels[i * 4 + 3] = 255
   }
 
-  return colours
+  return pixels
 }

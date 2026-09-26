@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { gridColours, heightColour, MAX_HEIGHT, MIN_HEIGHT } from '../src/colours'
+import { gridPixels, heightColour, MAX_HEIGHT, MIN_HEIGHT } from '../src/colours'
 
 describe('heightColour', () => {
   it('gives a different colour to low, middle and high ground', () => {
@@ -29,13 +29,13 @@ describe('heightColour', () => {
   })
 })
 
-describe('gridColours', () => {
-  it('gives every cell three bytes, in the order the heights came in', () => {
+describe('gridPixels', () => {
+  it('gives every cell an opaque pixel, in the order the heights came in', () => {
     const heights = [0, 128, 255]
 
-    const colours = gridColours(heights)
+    const pixels = gridPixels(heights)
 
-    expect(colours).toHaveLength(heights.length * 3)
-    expect([...colours]).toEqual(heights.flatMap(heightColour))
+    expect(pixels).toHaveLength(heights.length * 4)
+    expect([...pixels]).toEqual(heights.flatMap((height) => [...heightColour(height), 255]))
   })
 })
