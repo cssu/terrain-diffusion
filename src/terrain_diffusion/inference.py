@@ -169,11 +169,13 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
 
     def predict(self, input: CoreModelInput) -> CoreModelOutput:
 
-        x = torch.from_numpy(np.ascontiguousarray(input.patch)).float().unsqueeze(0)
+        x = torch.from_numpy(input.patch).float().unsqueeze(0)
         conditioning = input.conditioning
         if conditioning is None:
-            conditioning = np.zeros(CORE_COND_VECTOR_DIM, dtype=np.float32) # zero for now until we get the coarse model in
-        conditional_inputs = [torch.from_numpy(np.ascontiguousarray(conditioning))[None].float()]
+            conditioning = np.zeros(
+                CORE_COND_VECTOR_DIM, dtype=np.float32
+            )  # zero for now since its produced by the coarse model
+        conditional_inputs = [torch.from_numpy(conditioning)[None].float()]
 
         with torch.no_grad():
             sample = self.model(
@@ -194,8 +196,7 @@ class DecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
         self.model.eval()
 
     def predict(self, input: DecoderModelInput) -> DecoderModelOutput:
-        latents = torch.from_numpy(np.ascontiguousarray(input.latent_map)).float()[None]
-
+        latents = torch.from_numpy(input.latent_map).float()[None]
 
         latents = torch.nn.functional.interpolate(
             latents, size=DECODER_INPUT_SIZE[1:], mode="nearest"
