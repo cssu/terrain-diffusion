@@ -8,6 +8,7 @@ import pytest
 
 from terrain_diffusion.inference import (
     LATENT_MAP_SIZE,
+    LATENT_SIZE,
     PATCH_SIZE,
     CoreModelInput,
     CoreModelOutput,
@@ -46,12 +47,12 @@ class TestTerrainModel:
             DecoderModelOutput(np.ones((1, 1)))
 
     def test_predict_core(self, initial_core):
-        input = CoreModelInput(np.ones(PATCH_SIZE))
+        input = CoreModelInput(np.ones(CoreModelInput.patch_shape))
 
         actual = initial_core.predict(input)
         actual_2 = initial_core.predict(input)
 
-        expected_low_res = np.ndarray((PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8))
+        expected_low_res = np.ndarray((LATENT_SIZE, LATENT_SIZE))
         expected_latent = np.ndarray(LATENT_MAP_SIZE)
 
         expected_low_res.fill(2)
@@ -61,8 +62,8 @@ class TestTerrainModel:
 
         assert actual == expected, "predictions are not equal"
         assert actual == actual_2, "model return different predictions on same input"
-        assert actual.low_res_grid.shape == (PATCH_SIZE[0] // 8, PATCH_SIZE[1] // 8), (
-            "low resolution map shape is not patch size // 8"
+        assert actual.low_res_grid.shape == (LATENT_SIZE, LATENT_SIZE), (
+            "low resolution map shape is not the latent size"
         )
         assert actual.latent_map.shape == LATENT_MAP_SIZE, "latent map size is not correct"
 
@@ -72,13 +73,13 @@ class TestTerrainModel:
         actual = initial_decoder.predict(input)
         actual_2 = initial_decoder.predict(input)
 
-        expected_full_res = np.ndarray(PATCH_SIZE)
+        expected_full_res = np.ndarray(DecoderModelOutput.full_res_grid_shape)
         expected_full_res.fill(2)
 
         expected = DecoderModelOutput(expected_full_res)
 
         assert actual == expected, "predictions are not equal"
         assert actual == actual_2, "model return different predictions on same input"
-        assert actual.full_res_grid.shape == PATCH_SIZE, (
-            "full resolution map does not match patch size"
+        assert actual.full_res_grid.shape == DecoderModelOutput.full_res_grid_shape, (
+            "decoder output shape does not match its declared shape"
         )
