@@ -19,6 +19,7 @@ Neighbours and communication
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import ClassVar
@@ -43,6 +44,10 @@ CORE_COND_VECTOR_DIM = 58
 SIGMA_DATA = 0.5
 SIGMA_0 = 80.0
 CORE_INIT_T = float(np.arctan(SIGMA_0 / SIGMA_DATA))
+
+
+CORE_INTERMEDIATE_SIGMA = 0.35
+CORE_INTERMEDIATE_T = float(np.arctan(CORE_INTERMEDIATE_SIGMA / SIGMA_DATA))
 
 
 @dataclass
@@ -169,7 +174,6 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
 
     def predict(self, input: CoreModelInput) -> CoreModelOutput:
 
-        x = torch.from_numpy(input.patch).float().unsqueeze(0)
         conditioning = input.conditioning
         if conditioning is None:
             conditioning = np.zeros(
@@ -177,12 +181,29 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
             )  # zero for now since its produced by the coarse model
         conditional_inputs = [torch.from_numpy(conditioning)[None].float()]
 
+
+        x = torch.from_numpy(input.patch).float().unsqueeze(0)
+        t = input.noise_level
+
         with torch.no_grad():
-            sample = self.model(
+            x_t = x * SIGMA_DATA
+            pred = self.model(
                 x,
-                noise_labels=torch.tensor([input.noise_level], dtype=torch.float32),
+                noise_labels=torch.tensor([t], dtype=torch.float32),
                 conditional_inputs=conditional_inputs,
             )
+            sample = math.cos(t) * x_t + math.sin(t) * SIGMA_DATA * pred
+
+
+            t = CORE_INTERMEDIATE_T
+            z = torch.randn_like(sample) * SIGMA_DATA
+            x_t = math.cos(t) * sample + math.sin(t) * z
+            pred = self.model(
+                x_t / SIGMA_DATA,
+                noise_labels=torch.tensor([t], dtype=torch.float32),
+                conditional_inputs=conditional_inputs,
+            )
+            sample = math.cos(t) * x_t + math.sin(t) * SIGMA_DATA * pred
 
         sample = sample[0].numpy()
         return CoreModelOutput(low_res_grid=sample[4], latent_map=sample[:4])
