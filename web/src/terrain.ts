@@ -10,16 +10,3 @@ export function heightTexture(heights: ArrayLike<number>, width: number, height:
 
   return texture
 }
-
-// Stands in for generated terrain until #85 produces it
-export function sampleHeights(size: number) {
-  const heights = new Uint8Array(size * size)
-
-  for (let row = 0; row < size; row++) {
-    for (let column = 0; column < size; column++) {
-      heights[row * size + column] = ((row + column) / (2 * (size - 1))) * 255
-    }
-  }
-
-  return heights
-}
