@@ -1,8 +1,9 @@
+import TerrainView from './TerrainView'
+
 function App() {
   return (
     <main>
-      <h1>terrain-diffusion</h1>
-      <p>The visualizer goes here.</p>
+      <TerrainView />
     </main>
   )
 }
