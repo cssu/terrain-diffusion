@@ -174,38 +174,37 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
 
     def predict(self, input: CoreModelInput) -> CoreModelOutput:
 
+        device = next((p.device for p in self.model.parameters()), torch.device("cpu"))
         conditioning = input.conditioning
         if conditioning is None:
             conditioning = np.zeros(
                 CORE_COND_VECTOR_DIM, dtype=np.float32
             )  # zero for now since its produced by the coarse model
-        conditional_inputs = [torch.from_numpy(conditioning)[None].float()]
+        conditional_inputs = [torch.from_numpy(conditioning)[None].float().to(device)]
 
-
-        x = torch.from_numpy(input.patch).float().unsqueeze(0)
+        x = torch.from_numpy(input.patch).float().unsqueeze(0).to(device)
         t = input.noise_level
 
         with torch.no_grad():
             x_t = x * SIGMA_DATA
             pred = self.model(
                 x,
-                noise_labels=torch.tensor([t], dtype=torch.float32),
+                noise_labels=torch.tensor([t], dtype=torch.float32, device=device),
                 conditional_inputs=conditional_inputs,
             )
             sample = math.cos(t) * x_t + math.sin(t) * SIGMA_DATA * pred
-
 
             t = CORE_INTERMEDIATE_T
             z = torch.randn_like(sample) * SIGMA_DATA
             x_t = math.cos(t) * sample + math.sin(t) * z
             pred = self.model(
                 x_t / SIGMA_DATA,
-                noise_labels=torch.tensor([t], dtype=torch.float32),
+                noise_labels=torch.tensor([t], dtype=torch.float32, device=device),
                 conditional_inputs=conditional_inputs,
             )
             sample = math.cos(t) * x_t + math.sin(t) * SIGMA_DATA * pred
 
-        sample = sample[0].numpy()
+        sample = sample[0].cpu().numpy()
         return CoreModelOutput(low_res_grid=sample[4], latent_map=sample[:4])
 
 
@@ -217,23 +216,24 @@ class DecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
         self.model.eval()
 
     def predict(self, input: DecoderModelInput) -> DecoderModelOutput:
-        latents = torch.from_numpy(input.latent_map).float()[None]
+        device = next((p.device for p in self.model.parameters()), torch.device("cpu"))
 
+        latents = torch.from_numpy(input.latent_map).float()[None].to(device)
         latents = torch.nn.functional.interpolate(
             latents, size=DECODER_INPUT_SIZE[1:], mode="nearest"
         )
         rng = np.random.default_rng()
         noise = rng.standard_normal(DECODER_INPUT_SIZE[1:]).astype(np.float32)
-        x = torch.cat([torch.from_numpy(noise)[None, None], latents], dim=1)
+        x = torch.cat([torch.from_numpy(noise)[None, None].to(device), latents], dim=1)
 
         with torch.no_grad():
             sample = self.model(
                 x,
-                noise_labels=torch.tensor([input.noise_level], dtype=torch.float32),
+                noise_labels=torch.tensor([input.noise_level], dtype=torch.float32, device=device),
                 conditional_inputs=[],
             )
 
-        return DecoderModelOutput(full_res_grid=sample[0, 0].numpy())
+        return DecoderModelOutput(full_res_grid=sample[0, 0].cpu().numpy())
 
 
 MODELS = {"decoder": DecoderModel, "core": CoreModel}
