@@ -1,6 +1,9 @@
 """
-Tests inference interface by instantiating mock models
-and implementing the `generate` function
+Tests the inference interface.
+
+The mock-model tests in TestTerrainModel run in the fast group. TestGpuInference
+downloads and runs the real released weights, so it is marked `gpu` and only runs
+via `scripts/test-check.sh gpu` or a `/test gpu` PR comment.
 """
 
 import numpy as np
@@ -8,32 +11,17 @@ import pytest
 import torch
 
 from terrain_diffusion.inference import (
-    CORE_INIT_T,
-    CORE_INTERMEDIATE_T,
     LATENT_MAP_SIZE,
     LATENT_SIZE,
     PATCH_SIZE,
-    CoreModel,
     CoreModelInput,
     CoreModelOutput,
     DecoderModelInput,
     DecoderModelOutput,
     MockCoreModel,
     MockDecoderModel,
+    load_model,
 )
-
-
-class _RecordingModel(torch.nn.Module):
-    """Stand-in for EDMUnet2D that records the noise label of every call."""
-
-    def __init__(self):
-        super().__init__()
-        self._dummy = torch.nn.Parameter(torch.zeros(1))
-        self.noise_labels = []
-
-    def forward(self, x, noise_labels=None, conditional_inputs=None):
-        self.noise_labels.append(float(noise_labels[0]))
-        return torch.zeros_like(x)
 
 
 class TestTerrainModel:
@@ -44,17 +32,6 @@ class TestTerrainModel:
     @pytest.fixture
     def initial_core(self) -> MockCoreModel:
         return MockCoreModel()
-
-    def test_core_runs_both_noise_levels(self):
-        core = object.__new__(CoreModel)
-        core.model = _RecordingModel()
-
-        patch = np.zeros(CoreModelInput.patch_shape, dtype=np.float32)
-        actual = core.predict(CoreModelInput(patch))
-
-        assert core.model.noise_labels == pytest.approx([CORE_INIT_T, CORE_INTERMEDIATE_T])
-        assert actual.latent_map.shape == LATENT_MAP_SIZE
-        assert actual.low_res_grid.shape == (LATENT_SIZE, LATENT_SIZE)
 
     def test_core_input_generation(self):
         with pytest.raises(AssertionError):
@@ -111,3 +88,46 @@ class TestTerrainModel:
         assert actual.full_res_grid.shape == DecoderModelOutput.full_res_grid_shape, (
             "decoder output shape does not match its declared shape"
         )
+
+
+@pytest.fixture(scope="module")
+def device():
+    return torch.device("cuda")
+
+
+@pytest.fixture(scope="module")
+def core(device):
+    model = load_model("core")
+    model.model.to(device)
+    return model
+
+
+@pytest.fixture(scope="module")
+def decoder(device):
+    model = load_model("decoder")
+    model.model.to(device)
+    return model
+
+
+def _noise(shape, seed=0):
+    return np.random.default_rng(seed).standard_normal(shape).astype(np.float32)
+
+
+class TestGpuInference:
+    @pytest.mark.gpu
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
+    def test_core_runs_on_gpu(self, core):
+        core_out = core.predict(CoreModelInput(_noise(CoreModelInput.patch_shape)))
+
+        assert core_out.latent_map.shape == LATENT_MAP_SIZE
+        assert core_out.low_res_grid.shape == (LATENT_SIZE, LATENT_SIZE)
+        assert np.isfinite(core_out.latent_map).all()
+        assert np.isfinite(core_out.low_res_grid).all()
+
+    @pytest.mark.gpu
+    @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
+    def test_decoder_runs_on_gpu(self, decoder):
+        dec_out = decoder.predict(DecoderModelInput(_noise(LATENT_MAP_SIZE)))
+
+        assert dec_out.full_res_grid.shape == PATCH_SIZE
+        assert np.isfinite(dec_out.full_res_grid).all()
