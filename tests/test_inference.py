@@ -5,11 +5,15 @@ and implementing the `generate` function
 
 import numpy as np
 import pytest
+import torch
 
 from terrain_diffusion.inference import (
+    CORE_INIT_T,
+    CORE_INTERMEDIATE_T,
     LATENT_MAP_SIZE,
     LATENT_SIZE,
     PATCH_SIZE,
+    CoreModel,
     CoreModelInput,
     CoreModelOutput,
     DecoderModelInput,
@@ -17,6 +21,19 @@ from terrain_diffusion.inference import (
     MockCoreModel,
     MockDecoderModel,
 )
+
+
+class _RecordingModel(torch.nn.Module):
+    """Stand-in for EDMUnet2D that records the noise label of every call."""
+
+    def __init__(self):
+        super().__init__()
+        self._dummy = torch.nn.Parameter(torch.zeros(1))
+        self.noise_labels = []
+
+    def forward(self, x, noise_labels=None, conditional_inputs=None):
+        self.noise_labels.append(float(noise_labels[0]))
+        return torch.zeros_like(x)
 
 
 class TestTerrainModel:
@@ -27,6 +44,17 @@ class TestTerrainModel:
     @pytest.fixture
     def initial_core(self) -> MockCoreModel:
         return MockCoreModel()
+
+    def test_core_runs_both_noise_levels(self):
+        core = object.__new__(CoreModel)
+        core.model = _RecordingModel()
+
+        patch = np.zeros(CoreModelInput.patch_shape, dtype=np.float32)
+        actual = core.predict(CoreModelInput(patch))
+
+        assert core.model.noise_labels == pytest.approx([CORE_INIT_T, CORE_INTERMEDIATE_T])
+        assert actual.latent_map.shape == LATENT_MAP_SIZE
+        assert actual.low_res_grid.shape == (LATENT_SIZE, LATENT_SIZE)
 
     def test_core_input_generation(self):
         with pytest.raises(AssertionError):

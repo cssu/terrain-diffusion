@@ -174,12 +174,12 @@ class CoreModel(TerrainModel[CoreModelInput, CoreModelOutput]):
 
     def predict(self, input: CoreModelInput) -> CoreModelOutput:
 
-        device = next((p.device for p in self.model.parameters()), torch.device("cpu"))
+        device = next(self.model.parameters()).device
         conditioning = input.conditioning
         if conditioning is None:
             conditioning = np.zeros(
                 CORE_COND_VECTOR_DIM, dtype=np.float32
-            )  # zero for now since its produced by the coarse model
+            )  # zero for now since its produced by the coarse model which we havent incorporated
         conditional_inputs = [torch.from_numpy(conditioning)[None].float().to(device)]
 
         x = torch.from_numpy(input.patch).float().unsqueeze(0).to(device)
@@ -216,7 +216,7 @@ class DecoderModel(TerrainModel[DecoderModelInput, DecoderModelOutput]):
         self.model.eval()
 
     def predict(self, input: DecoderModelInput) -> DecoderModelOutput:
-        device = next((p.device for p in self.model.parameters()), torch.device("cpu"))
+        device = next(self.model.parameters()).device
 
         latents = torch.from_numpy(input.latent_map).float()[None].to(device)
         latents = torch.nn.functional.interpolate(
