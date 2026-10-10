@@ -11,4 +11,5 @@ One module per component:
     service        Generation Service
     cli            Output and CLI
     benchmark      Benchmarking and Evaluation
+    models         Copied Terrain Diffusion network architecture (see models/LICENSE)
 """
