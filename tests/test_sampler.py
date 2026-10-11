@@ -129,48 +129,20 @@ class TestSeed:
         assert noise.shape == (height, width)
 
 
+
 class TestRegionProduction:
     @pytest.fixture
-    def pipeline(self, mocker):
-        pipeline = mocker.Mock()  
-        pipeline.generate.side_effect = lambda patch: np.full(
-            patch.shape, 5
-        )  # added side_effect to keep it a Mock object
-        return pipeline
+    def clean_patch(self, mocker):
+        clean = mocker.Mock()
+        clean.side_effect = lambda patch: np.full(patch.shape, 5.0)
+        return clean
 
-    def test_all_fives(self, pipeline):
-        """Assert the finished grid is all fives everywhere, including the overlaps and the corners.
-        If the overlaps read higher then the weights are not being divided out"""
+    @pytest.fixture
+    def store(self):
+        from terrain_diffusion.store import TerrainStore 
+        return TerrainStore(tile_height=8, tile_width=8, capacity=4)
 
-        seed = 123
-        height = 8
-        width = 8
-        window_size = 4
-        step = 2
-
-        weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
-        result = weighted_sum / weight_sum  # doing job of store
-        assert np.allclose(
-            result, 5
-        )  
-
-    def test_full_size(self, pipeline):
-        """Assert the finished grid is the region's full resolution size"""
-
-        seed = 123
-        height = 8
-        width = 8
-        window_size = 4
-        step = 2
-
-        weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
-        result = weighted_sum / weight_sum  # doing job of store
-
-        assert result.shape == (height, width)
-
-    def test_once_per_window(self, pipeline):
-        """Assert the fake pipeline was called once per window position and no more"""
-
+    def test_writes_windows_to_store(self, clean_patch, store):
         seed = 123
         height = 8
         width = 8
@@ -179,41 +151,62 @@ class TestRegionProduction:
 
         positions = window_positions(height, width, window_size, step)
 
-        produce_region(seed, height, width, window_size, step, pipeline)
-
-        assert pipeline.generate.call_count == len(positions)
-
-    def test_same_seed_grid(self, pipeline):
-        """Assert the same seed and region run twice give identical grids"""
-        seed = 123
-        height = 8
-        width = 8
-        window_size = 4
-        step = 2
-
-        weighted_sum1, weight_sum1 = produce_region(
-            seed, height, width, window_size, step, pipeline
+        produce_region(
+            seed, height, width, window_size, step,
+            clean_patch, store, 0, 0,
         )
-        weighted_sum2, weight_sum2 = produce_region(
-            seed, height, width, window_size, step, pipeline
+
+        assert clean_patch.call_count == len(positions)
+        assert store.is_complete(seed, 0, 0)
+
+        result = store.heights(seed, 0, 0)
+        assert np.allclose(result, 5.0)
+
+    def test_writes_windows_at_global_offset(self, clean_patch, store):
+        produce_region(
+            123, 4, 4, 2, 2,
+            clean_patch, store, 2, 2,
         )
-        result1 = weighted_sum1 / weight_sum1
-        result2 = weighted_sum2 / weight_sum2
+
+        assert store.is_complete(123, 0, 0)
+
+        result = store.heights(123, 0, 0)
+        assert np.allclose(result[2:6, 2:6], 5.0)
+
+    def test_same_seed_same_region(self, clean_patch):
+        from terrain_diffusion.store import TerrainStore  # adjust import if needed
+
+        store1 = TerrainStore(tile_height=8, tile_width=8, capacity=4)
+        store2 = TerrainStore(tile_height=8, tile_width=8, capacity=4)
+
+        produce_region(123, 8, 8, 4, 2, clean_patch, store1, 0, 0)
+        produce_region(123, 8, 8, 4, 2, clean_patch, store2, 0, 0)
+
+        result1 = store1.heights(123, 0, 0)
+        result2 = store2.heights(123, 0, 0)
 
         assert np.array_equal(result1, result2)
 
-    def test_deterministic_region(self, pipeline):
-        """Assert the output matches the expected grid."""
-        seed = 123
-        height = 9
-        width = 9
-        window_size = 3
-        step = 2
-        pipeline.generate.side_effect = lambda patch: np.ones(patch.shape)
+    def test_deterministic_region(self, mocker):
+        from terrain_diffusion.store import TerrainStore  # adjust to your actual import path
 
-        weighted_sum, weight_sum = produce_region(seed, height, width, window_size, step, pipeline)
-        result = weighted_sum / weight_sum
+        clean_patch = mocker.Mock()
+        clean_patch.side_effect = lambda patch: np.ones(patch.shape)
 
-        expected = np.ones((9, 9))
+        store = TerrainStore(tile_height=8, tile_width=8, capacity=4)
 
-        assert np.allclose(result, expected)
+        produce_region(
+            seed=123,
+            height=8,
+            width=8,
+            window_size=4,
+            step=2,
+            clean_patch=clean_patch,
+            store=store,
+            global_row=0,
+            global_col=0,
+        )
+
+        result = store.heights(123, 0, 0)
+        assert np.allclose(result, 1.0)
+

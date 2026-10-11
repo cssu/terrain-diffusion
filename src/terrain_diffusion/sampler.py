@@ -83,7 +83,10 @@ def produce_region(
     width: int,
     window_size: int,
     step: int,
-    pipeline,
+    clean_patch,
+    store,
+    global_row: int = 0,
+    global_col: int = 0,
 ) -> tuple[np.ndarray]:
     """Make noise canvas of given dimensions. Make noise and weight grid.
     For each window position, cut the window out of the noise canvas, send it to pipeline, add the processed output and its weight to Terrain Store (at that position).
@@ -94,18 +97,17 @@ def produce_region(
     positions = window_positions(height, width, window_size, step)
     weights = weight_grid(window_size)  
 
-    weighted_sum = np.zeros((height, width))
-    weight_sum = np.zeros((height, width))
-
     for row, column in positions:
         window = noise[row : row + window_size, column : column + window_size]
 
-        processed_patch = pipeline.generate(window)
+        processed_patch = clean_patch(window)
 
-        # From FakeStore()
-        weighted_sum[row : row + window_size, column : column + window_size] += (
-            processed_patch * weights
+        store.add_window(
+        seed,
+        processed_patch,
+        weights,
+        global_row + row,
+        global_col + column,
         )
-        weight_sum[row : row + window_size, column : column + window_size] += weights
 
-    return weighted_sum, weight_sum
+    return store.heights(seed, 0, 0)

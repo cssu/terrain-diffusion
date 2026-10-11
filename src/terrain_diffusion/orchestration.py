@@ -12,3 +12,4 @@ Neighbours and communication
 - Reads finished height grids from the Terrain Store.
 - In the build-out it also runs the coarse model to produce conditioning for a region.
 """
+
